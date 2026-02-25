@@ -1,13 +1,14 @@
-# AI SQL Agent
+# Semantic-SQL-Agent
 
-自然语言转 Trino SQL 查询服务 (MVP)
+A local AI-powered semantic query engine that converts natural language into secure SQL and executes it via Trino.
 
 ## 功能
 
 - 接收自然语言问题
 - 调用 LLM 生成 Trino SQL
-- 校验 SQL 安全性
+- 校验 SQL 安全性（只允许 SELECT）
 - 执行查询并返回 JSON 结果
+- 支持跨库查询（MySQL + PostgreSQL）
 
 ## 安装
 
