@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router as api_router
+from .api.upload_report import router as upload_router
 
 app = FastAPI(
     title="Semantic SQL Agent API",
-    description="自然语言转 SQL 查询服务 API",
-    version="0.2.0"
+    description="自然语言转 SQL 查询服务 API - V0.3",
+    version="0.3.0"
 )
 
 # 添加 CORS 中间件
@@ -19,6 +20,7 @@ app.add_middleware(
 
 # 注册 API 路由
 app.include_router(api_router, prefix="/api", tags=["SQL Agent"])
+app.include_router(upload_router, prefix="/api", tags=["Report DSL"])
 
 
 @app.get("/")
@@ -27,7 +29,7 @@ def root():
     return {
         "status": "ok",
         "service": "Semantic SQL Agent",
-        "version": "0.2.0"
+        "version": "0.3.0"
     }
 
 

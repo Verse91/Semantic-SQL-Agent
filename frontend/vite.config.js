@@ -4,7 +4,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '0.0.0.0',
     port: 3000,
+    allowedHosts: ['slide-earth-metres-korean.trycloudflare.com', 'remainder-affiliation-christ-black.trycloudflare.com'],
     proxy: {
       '/api': {
         target: 'http://localhost:8000',

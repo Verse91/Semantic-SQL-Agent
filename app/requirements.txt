@@ -3,3 +3,4 @@ uvicorn
 trino
 requests
 pydantic
+python-multipart
