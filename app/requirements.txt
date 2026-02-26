@@ -4,3 +4,4 @@ trino
 requests
 pydantic
 python-multipart
+sqlglot
