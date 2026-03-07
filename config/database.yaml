@@ -1,0 +1,28 @@
+# SAP HANA 数据库配置
+hana:
+  # JDBC 驱动类名
+  driver: com.sap.db.jdbc.Driver
+  # JDBC 连接字符串 (替换为实际的 HANA 主机地址)
+  jdbc_url: jdbc:sap://localhost:30015
+  # HANA 用户名 (建议使用环境变量)
+  user: ${HANA_USER:-SYSTEM}
+  # HANA 密码 (建议使用环境变量)
+  password: ${HANA_PASSWORD:-}
+  # JDBC 驱动 jar 路径
+  jar: drivers/ngdbc.jar
+
+# SAP 表前缀列表 (用于 Router 识别 SAP 查询)
+sap_table_prefixes:
+  - MARA      # 物料主数据
+  - VBAK      # 销售订单头
+  - VBAP      # 销售订单行
+  - BKPF      # 会计凭证头
+  - BSEG      # 会计凭证行
+  - EKKO      # 采购订单头
+  - EKPO      # 采购订单行
+  - LFA1      # 供应商主数据
+  - KNA1      # 客户主数据
+  - MAKT      # 物料描述
+  - T001      # 公司代码
+  - T001W     # 工厂
+  - T003T     # 销售订单类型文本
