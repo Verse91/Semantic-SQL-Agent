@@ -1,0 +1,279 @@
+# SAP Mock Schema 配置文件
+# 光伏串焊机行业测试数据
+# 数据库: sap_mock (PostgreSQL)
+
+# 数据源配置
+datasource:
+  type: postgresql
+  host: localhost
+  port: 5432
+  database: sap_mock
+  user: postgres
+  password: postgres
+
+# Schema 定义
+schemas:
+  # 主数据 (Master Data)
+  md:
+    description: "主数据 - 客户、供应商、物料"
+    tables:
+      # 客户主数据
+      kna1:
+        description: "客户主数据 (光伏企业)"
+        columns:
+          kunnr: "客户编号 (PK)"
+          name1: "客户名称"
+          land1: "国家代码"
+          city: "城市"
+          region: "地区"
+          created_at: "创建时间"
+      
+      # 客户销售数据
+      knvv:
+        description: "客户销售组织数据"
+        columns:
+          kunnr: "客户编号 (PK)"
+          vkorg: "销售组织 (PK)"
+          vtweg: "分销渠道"
+          spart: "产品组"
+      
+      # 供应商主数据
+      lfa1:
+        description: "供应商主数据"
+        columns:
+          lifnr: "供应商编号 (PK)"
+          name1: "供应商名称"
+          land1: "国家代码"
+          city: "城市"
+          created_at: "创建时间"
+      
+      # 物料主数据
+      mara:
+        description: "物料主数据 (串焊机、电池片、硅片)"
+        columns:
+          matnr: "物料编号 (PK)"
+          matkl: "物料组"
+          mtart: "物料类型 (HALB=半成品, ROH=原材料)"
+          meins: "基本计量单位"
+          created_at: "创建时间"
+      
+      # 物料描述
+      makt:
+        description: "物料描述 (多语言)"
+        columns:
+          matnr: "物料编号 (PK)"
+          spras: "语言 (PK, C=中文, E=英文)"
+          maktx: "物料描述"
+      
+      # 工厂数据
+      marc:
+        description: "工厂级物料数据"
+        columns:
+          matnr: "物料编号 (PK)"
+          werks: "工厂 (PK)"
+          dispo: "MRP控制者"
+          beskz: "生产采购类型"
+      
+      # 仓库
+      t001w:
+        description: "工厂主数据"
+        columns:
+          werks: "工厂 (PK)"
+          name1: "工厂名称"
+          land1: "国家代码"
+      
+      # 库存地点
+      t001l:
+        description: "库存地点"
+        columns:
+          werks: "工厂 (PK)"
+          lgort: "库存地点 (PK)"
+          lgobe: "库存地点描述"
+
+  # 销售模块 (Sales Distribution)
+  sd:
+    description: "销售模块 - 订单、发货、发票"
+    tables:
+      # 销售订单头
+      vbak:
+        description: "销售订单头部"
+        columns:
+          vbeln: "销售订单号 (PK)"
+          auart: "订单类型"
+          vkorg: "销售组织"
+          kunnr: "客户编号"
+          erdat: "订单日期"
+          netwr: "净价值"
+      
+      # 销售订单行
+      vbap:
+        description: "销售订单行项目"
+        columns:
+          vbeln: "销售订单号 (PK)"
+          posnr: "行项目号 (PK)"
+          matnr: "物料编号"
+          kwmeng: "销售数量"
+          netwr: "净价值"
+      
+      # 发货单头
+      likp:
+        description: "发货单头部"
+        columns:
+          vbeln: "发货单号 (PK)"
+          lfart: "发货类型"
+          kunnr: "客户编号"
+          wadat: "发货日期"
+      
+      # 发货单行
+      lips:
+        description: "发货单行项目"
+        columns:
+          vbeln: "发货单号 (PK)"
+          posnr: "行项目号 (PK)"
+          matnr: "物料编号"
+          lfimg: "交货数量"
+      
+      # 销售发票头
+      vbrk:
+        description: "销售发票头部"
+        columns:
+          vbeln: "发票号 (PK)"
+          kunnr: "客户编号"
+          fkdat: "发票日期"
+          netwr: "净价值"
+      
+      # 发票行
+      vbrp:
+        description: "发票行项目"
+        columns:
+          vbeln: "发票号 (PK)"
+          posnr: "行项目号 (PK)"
+          matnr: "物料编号"
+          fkimg: "开票数量"
+          netwr: "净价值"
+
+  # 采购模块 (Materials Management)
+  mm:
+    description: "采购模块 - 采购订单、收货"
+    tables:
+      # 采购订单头
+      ekko:
+        description: "采购订单头部"
+        columns:
+          ebeln: "采购订单号 (PK)"
+          lifnr: "供应商编号"
+          bedat: "采购日期"
+          ekorg: "采购组织"
+      
+      # 采购订单行
+      ekpo:
+        description: "采购订单行项目"
+        columns:
+          ebeln: "采购订单号 (PK)"
+          ebelp: "行项目号 (PK)"
+          matnr: "物料编号"
+          menge: "采购数量"
+          netpr: "净价"
+      
+      # 物料凭证头
+      mkpf:
+        description: "物料凭证头部"
+        columns:
+          mblnr: "物料凭证号 (PK)"
+          budat: "过账日期"
+          usnam: "用户名"
+      
+      # 收货单
+      mseg:
+        description: "物料凭证行项目"
+        columns:
+          mblnr: "物料凭证号 (PK)"
+          zeile: "行项目号 (PK)"
+          matnr: "物料编号"
+          werks: "工厂"
+          menge: "数量"
+
+  # 生产模块 (Production Planning)
+  pp:
+    description: "生产模块 - 生产订单"
+    tables:
+      # 生产订单头
+      afko:
+        description: "生产订单头部"
+        columns:
+          aufnr: "生产订单号 (PK)"
+          auart: "订单类型"
+          werks: "工厂"
+          erdat: "创建日期"
+      
+      # 生产订单物料
+      afpo:
+        description: "生产订单物料"
+        columns:
+          aufnr: "生产订单号 (PK)"
+          matnr: "物料编号 (PK)"
+          gamng: "生产数量"
+      
+      # 工序
+      afvc:
+        description: "生产工序"
+        columns:
+          aufnr: "生产订单号 (PK)"
+          vornr: "工序号 (PK)"
+          ltxa1: "工序描述"
+
+  # 库存模块 (Inventory Management)
+  im:
+    description: "库存模块"
+    tables:
+      # 仓库库存
+      mard:
+        description: "物料库存 (按工厂+库存地点)"
+        columns:
+          matnr: "物料编号 (PK)"
+          werks: "工厂 (PK)"
+          lgort: "库存地点 (PK)"
+          labst: "非限制使用库存"
+      
+      # 批次库存
+      mchb:
+        description: "批次库存"
+        columns:
+          matnr: "物料编号 (PK)"
+          charg: "批次号 (PK)"
+          clabs: "非限制使用批次库存"
+      
+      # 库存移动
+      matdoc:
+        description: "库存移动凭证"
+        columns:
+          doc_id: "凭证ID (PK)"
+          matnr: "物料编号"
+          werks: "工厂"
+          menge: "数量"
+          bwart: "移动类型 (101=采购入库, 201=发料, 601=销售发货)"
+          budat: "过账时间"
+
+# 关联关系
+relationships:
+  # 销售
+  - { from: "sd.vbak.kunnr", to: "md.kna1.kunnr", type: "FK" }
+  - { from: "sd.vbap.matnr", to: "md.mara.matnr", type: "FK" }
+  - { from: "sd.vbap.vbeln", to: "sd.vbak.vbeln", type: "FK" }
+  
+  # 采购
+  - { from: "mm.ekko.lifnr", to: "md.lfa1.lifnr", type: "FK" }
+  - { from: "mm.ekpo.matnr", to: "md.mara.matnr", type: "FK" }
+  - { from: "mm.ekpo.ebeln", to: "mm.ekko.ebeln", type: "FK" }
+  
+  # 生产
+  - { from: "pp.afpo.matnr", to: "md.mara.matnr", type: "FK" }
+  - { from: "pp.afpo.aufnr", to: "pp.afko.aufnr", type: "FK" }
+
+# 表分组 (用于 Agent 判断查询类型)
+table_groups:
+  sales: ["sd.vbak", "sd.vbap", "sd.likp", "sd.lips", "sd.vbrk", "sd.vbrp"]
+  purchase: ["mm.ekko", "mm.ekpo", "mm.mseg", "mm.mkpf"]
+  production: ["pp.afko", "pp.afpo", "pp.afvc"]
+  inventory: ["im.mard", "im.mchb", "im.matdoc"]
+  master_data: ["md.kna1", "md.lfa1", "md.mara", "md.makt", "md.marc", "md.t001w", "md.t001l"]

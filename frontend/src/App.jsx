@@ -6,7 +6,8 @@ import axios from 'axios';
 const { TextArea } = Input;
 const { Option } = Select;
 
-const API_BASE = 'http://localhost:8000';
+// V2 API 端口
+const API_BASE = 'http://localhost:8001';
 
 function App() {
   const [mode, setMode] = useState('natural_language'); // natural_language | report_dsl
