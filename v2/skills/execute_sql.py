@@ -4,12 +4,16 @@ SQL 执行 Skill
 import os
 import sys
 import psycopg2
+from psycopg2 import pool
 from typing import Dict, Any
 from skills.base import BaseSkill
+import logging
 
 # 添加父项目路径
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
+
+logger = logging.getLogger(__name__)
 
 
 class ExecuteSQLSkill(BaseSkill):
@@ -19,19 +23,16 @@ class ExecuteSQLSkill(BaseSkill):
     description = "根据数据源执行 SQL 查询"
     
     def __init__(self):
-        self.pg_conn = None
-    
-    def _get_pg_connection(self):
-        """获取 PostgreSQL 连接"""
-        if self.pg_conn is None or self.pg_conn.closed:
-            self.pg_conn = psycopg2.connect(
-                host="localhost",
-                port=5432,
-                database="sap_mock",
-                user="postgres",
-                password="postgres"
-            )
-        return self.pg_conn
+        # 使用连接池
+        self.pool = pool.ThreadedConnectionPool(
+            minconn=1,
+            maxconn=5,
+            host="localhost",
+            port=5432,
+            database="sap_mock",
+            user="postgres",
+            password="postgres"
+        )
     
     def run(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """执行 SQL"""
@@ -42,9 +43,14 @@ class ExecuteSQLSkill(BaseSkill):
             state["error"] = "No SQL to execute"
             return state
         
+        conn = None
         try:
-            conn = self._get_pg_connection()
+            # 从池中获取连接
+            conn = self.pool.getconn()
+            conn.set_session(autocommit=True)  # 设置自动提交
             cursor = conn.cursor()
+            
+            logger.info(f"Executing SQL: {sql[:100]}...")
             cursor.execute(sql)
             
             # 如果是 SELECT 查询，获取结果
@@ -53,7 +59,6 @@ class ExecuteSQLSkill(BaseSkill):
                 rows = cursor.fetchall()
                 data = [dict(zip(columns, row)) for row in rows]
             else:
-                conn.commit()
                 data = []
                 columns = []
                 rows = []
@@ -69,10 +74,17 @@ class ExecuteSQLSkill(BaseSkill):
             
             state["execution_result"] = result
             state["error"] = None
+            logger.info(f"Query successful: {len(data)} rows")
             
         except Exception as e:
+            logger.error(f"SQL Error: {e}")
             state["execution_result"] = None
             state["error"] = str(e)
+        
+        finally:
+            # 归还连接到池
+            if conn:
+                self.pool.putconn(conn)
         
         return state
 
