@@ -1,9 +1,8 @@
 """
-SQL 生成 Skill
+SQL 生成 Skill (支持 Query Plan)
 """
 import os
 import sys
-import requests
 from typing import Dict, Any
 from skills.base import BaseSkill
 
@@ -11,25 +10,31 @@ from skills.base import BaseSkill
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
-from prompts.generate_sql_prompt import build_generate_sql_prompt
-
 
 class GenerateSQLSkill(BaseSkill):
     """SQL 生成 Skill"""
     
     name = "generate_sql"
-    description = "将自然语言转换为 SQL 查询"
+    description = "将自然语言或 Query Plan 转换为 SQL 查询"
     
     def run(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """生成 SQL"""
-        # 构建 prompt
+        from prompts.generate_sql_prompt import build_generate_sql_prompt
+        
+        user_query = state.get("user_query", "")
+        schema_context = state.get("schema_context", "")
+        conversation_history = state.get("conversation_history", [])
+        query_plan = state.get("query_plan", {})
+        
+        # 构建 prompt (支持 Query Plan)
         prompt = build_generate_sql_prompt(
-            user_query=state["user_query"],
-            schema_context=state.get("schema_context", ""),
-            conversation_history=state.get("conversation_history", [])
+            user_query=user_query,
+            schema_context=schema_context,
+            conversation_history=conversation_history,
+            query_plan=query_plan
         )
         
-        # 直接调用 MiniMax API (绕过原始 llm_service 的严格验证)
+        # 直接调用 MiniMax API
         sql = self._call_minimax(prompt)
         
         if sql:
@@ -43,6 +48,8 @@ class GenerateSQLSkill(BaseSkill):
     
     def _call_minimax(self, prompt: str) -> str:
         """调用 MiniMax API"""
+        import requests
+        
         api_key = os.getenv("MINIMAX_API_KEY")
         if not api_key:
             return ""
@@ -63,9 +70,6 @@ class GenerateSQLSkill(BaseSkill):
             resp = requests.post(url, json=data, headers=headers, timeout=60)
             resp.raise_for_status()
             result = resp.json()
-            
-            # 调试输出
-            print(f"API Response: {result}")
             
             if result.get("choices") and len(result.get("choices", [])) > 0:
                 msg = result["choices"][0].get("message", {})

@@ -17,7 +17,6 @@ from pydantic import BaseModel
 from typing import Optional, List, Dict
 import uuid
 
-from agent.graph import workflow
 from memory.conversation_memory import get_conversation_memory
 from memory.session_store import get_session_store
 
@@ -80,21 +79,50 @@ def chat(request: ChatRequest):
         # 获取对话历史
         history = memory.get_recent(session_id, count=4)
         
-        # 构建初始状态
-        initial_state = {
+        # 直接调用 skills (绕过 LangGraph 避免并发问题)
+        from skills.generate_sql import generate_sql_skill
+        from skills.validate_sql import validate_sql_skill
+        from skills.route_datasource import route_datasource_skill
+        from skills.execute_sql import execute_sql_skill
+        from skills.format_result import format_result_skill
+        from schema.schema_retriever import retrieve_schema
+        
+        # 1. 获取 Schema
+        schema_context = retrieve_schema(request.query)
+        
+        # 构建状态
+        state = {
             "user_query": request.query,
             "conversation_history": history,
-            "schema_context": "",
+            "schema_context": schema_context,
             "generated_sql": "",
             "validated_sql": "",
-            "datasource": "trino",
+            "datasource": "postgresql",
             "execution_result": None,
             "error": None,
             "retry_count": 0
         }
         
-        # 执行工作流
-        result = workflow.invoke(initial_state)
+        # 2. 生成 SQL
+        state = generate_sql_skill.run(state)
+        
+        # 3. 校验 SQL
+        if not state.get("error"):
+            state = validate_sql_skill.run(state)
+        
+        # 4. 路由数据源
+        if not state.get("error"):
+            state = route_datasource_skill.run(state)
+        
+        # 5. 执行 SQL
+        if not state.get("error"):
+            state = execute_sql_skill.run(state)
+        
+        # 6. 格式化结果
+        if not state.get("error"):
+            state = format_result_skill.run(state)
+        
+        result = state
         
         # 保存对话
         if result.get("validated_sql"):
@@ -218,3 +246,104 @@ def delete_session(session_id: str):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
+
+
+# ========== FS 报表上传接口 ==========
+
+from fastapi import UploadFile, File
+import tempfile
+from documents.fs_loader import get_fs_loader
+
+
+@app.post("/api/upload_fs")
+async def upload_fs(
+    file: UploadFile = File(...),
+    session_id: Optional[str] = None
+):
+    """上传 FS 报表文档并执行"""
+    try:
+        # 1. 保存上传的文件
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+            content = await file.read()
+            tmp.write(content)
+            tmp_path = tmp.name
+        
+        # 2. 加载 FS 文档
+        loader = get_fs_loader()
+        fs_document = loader.load(tmp_path)
+        
+        # 清理临时文件
+        os.unlink(tmp_path)
+        
+        # 3. 解析 FS
+        from skills.parse_fs import parse_fs_skill
+        state = {
+            "user_query": "",
+            "fs_document": fs_document,
+            "fs_json": {},
+            "query_plan": {},
+            "schema_context": "",
+            "generated_sql": "",
+            "validated_sql": "",
+            "datasource": "postgresql",
+            "execution_result": None,
+            "error": None,
+            "retry_count": 0,
+            "conversation_history": [],
+            "session_id": session_id or str(uuid.uuid4()),
+            "mode": "fs"
+        }
+        
+        # 4. 解析 FS
+        state = parse_fs_skill.run(state)
+        if state.get("error"):
+            return {"success": False, "error": f"FS解析失败: {state['error']}"}
+        
+        # 5. 获取 Schema
+        from schema.schema_retriever import retrieve_schema
+        state["schema_context"] = retrieve_schema("")
+        
+        # 6. 生成 Query Plan
+        from skills.generate_query_plan import generate_query_plan_skill
+        state = generate_query_plan_skill.run(state)
+        if state.get("error"):
+            return {"success": False, "error": f"Query Plan生成失败: {state['error']}"}
+        
+        # 7. 生成 SQL
+        from skills.generate_sql import generate_sql_skill
+        state = generate_sql_skill.run(state)
+        if state.get("error"):
+            return {"success": False, "error": f"SQL生成失败: {state['error']}"}
+        
+        # 8. 校验 SQL
+        from skills.validate_sql import validate_sql_skill
+        state = validate_sql_skill.run(state)
+        if state.get("error"):
+            return {"success": False, "error": f"SQL校验失败: {state['error']}"}
+        
+        # 9. 路由数据源
+        from skills.route_datasource import route_datasource_skill
+        state = route_datasource_skill.run(state)
+        
+        # 10. 执行 SQL
+        from skills.execute_sql import execute_sql_skill
+        state = execute_sql_skill.run(state)
+        if state.get("error"):
+            return {"success": False, "error": f"SQL执行失败: {state['error']}"}
+        
+        # 11. 格式化结果
+        from skills.format_result import format_result_skill
+        state = format_result_skill.run(state)
+        
+        return {
+            "success": True,
+            "session_id": state["session_id"],
+            "fs_json": state.get("fs_json"),
+            "query_plan": state.get("query_plan"),
+            "sql": state.get("validated_sql"),
+            "result": state.get("execution_result"),
+            "error": state.get("error")
+        }
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
