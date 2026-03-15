@@ -1,19 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, Table, Tag, Card, Layout, Space, Spin, Alert, Typography } from 'antd';
+import { Input, Button, Table, Tag, Card, Layout, Spin, Alert, Typography } from 'antd';
 import { 
   SendOutlined, 
   DeleteOutlined, 
   PaperClipOutlined, 
   DatabaseOutlined, 
   ConsoleSqlOutlined,
-  RobotOutlined,
-  UserOutlined 
 } from '@ant-design/icons';
 import axios from 'axios';
 
-const { Header, Content, Sider } = Layout;
+const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
-const { TextArea } = Input;
 
 const API_BASE = 'http://localhost:8001';
 
@@ -25,13 +22,9 @@ function App() {
   const [currentResult, setCurrentResult] = useState(null);
   const [error, setError] = useState(null);
   const [uploading, setUploading] = useState(false);
-  
+  const [showSql, setShowSql] = useState(false);
+  const [isChatting, setIsChatting] = useState(false); // 关键：对话状态
   const fileInputRef = useRef(null);
-  const messagesEndRef = useRef(null);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
   const handleSend = async () => {
     if (!question.trim()) return;
@@ -39,6 +32,7 @@ function App() {
     setQuestion('');
     setLoading(true);
     setError(null);
+    setIsChatting(true);
 
     const newMessages = [...messages, { role: 'user', content: userQuestion }];
     setMessages(newMessages);
@@ -54,14 +48,11 @@ function App() {
       if (data.error) {
         setError(data.error);
       } else {
-        setMessages([...newMessages, { 
-          role: 'assistant', 
-          content: data.sql ? 'SQL 已生成并执行成功。' : '执行完成' 
-        }]);
+        setMessages([...newMessages, { role: 'assistant', content: data.sql ? 'Query executed successfully.' : 'Done' }]);
         setCurrentResult(data);
       }
     } catch (err) {
-      setError(err.message || '请求失败');
+      setError(err.message || 'Request failed');
     } finally {
       setLoading(false);
     }
@@ -71,6 +62,8 @@ function App() {
     if (!file) return;
     setUploading(true);
     setError(null);
+    setIsChatting(true);
+    
     const formData = new FormData();
     formData.append('file', file);
     if (sessionId) formData.append('session_id', sessionId);
@@ -82,118 +75,185 @@ function App() {
       const data = response.data;
       if (data.session_id && !sessionId) setSessionId(data.session_id);
       
-      setMessages([...messages, 
-        { role: 'user', content: `[上传文件: ${file.name}]` },
-        { role: 'assistant', content: '报表解析完成，您可以开始提问了。' }
-      ]);
+      setMessages([...messages, { role: 'user', content: `[Upload: ${file.name}]` }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Report parsed successfully.' }]);
       setCurrentResult(data);
     } catch (err) {
-      setError(err.message || '上传失败');
+      setError(err.message || 'Upload failed');
     } finally {
       setUploading(false);
     }
   };
 
-  const renderMessages = () => messages.map((msg, idx) => (
-    <div key={idx} style={{ 
+  const handleClear = () => {
+    setSessionId(null);
+    setMessages([]);
+    setCurrentResult(null);
+    setError(null);
+    setIsChatting(false);
+  };
+
+  // 初始状态：居中布局
+  const renderWelcome = () => (
+    <div style={{ 
+      flex: 1, 
       display: 'flex', 
-      justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-      marginBottom: 20 
+      flexDirection: 'column', 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      transition: 'all 0.3s ease'
     }}>
-      <div style={{ display: 'flex', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row', maxWidth: '90%' }}>
-        <div style={{ 
-          width: 32, height: 32, borderRadius: '50%', 
-          background: msg.role === 'user' ? '#1677ff' : '#52c41a',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', flexShrink: 0,
-          margin: msg.role === 'user' ? '0 0 0 8px' : '0 8px 0 0'
-        }}>
-          {msg.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
-        </div>
-        <div style={{
-          padding: '10px 16px',
-          borderRadius: msg.role === 'user' ? '18px 2px 18px 18px' : '2px 18px 18px 18px',
-          background: msg.role === 'user' ? '#1677ff' : '#fff',
-          color: msg.role === 'user' ? '#fff' : '#000',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-          fontSize: '14px',
-          lineHeight: 1.6,
-          whiteSpace: 'pre-wrap'
-        }}>
-          {msg.content}
-        </div>
+      <Title level={1} style={{ 
+        marginBottom: 16, 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+        WebkitBackgroundClip: 'text', 
+        WebkitTextFillColor: 'transparent' 
+      }}>
+        🔥 Semantic SQL Agent
+      </Title>
+      <Paragraph type="secondary" style={{ fontSize: 16, marginBottom: 32 }}>
+        AI-Powered Data Analytics • Natural Language to SQL
+      </Paragraph>
+      
+      {/* 居中的输入框 */}
+      <div style={{ 
+        width: '100%', 
+        maxWidth: 600, 
+        border: '1px solid #ddd', 
+        borderRadius: 28, 
+        padding: '12px 16px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        background: '#fff',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+      }}>
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          accept=".txt,.md,.pdf,.docx"
+          onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])}
+        />
+        <Button 
+          type="text" 
+          icon={<PaperClipOutlined />} 
+          onClick={() => fileInputRef.current?.click()}
+          loading={uploading}
+        />
+        <Input
+          bordered={false}
+          placeholder="Ask a question about your data..."
+          value={question}
+          onChange={e => setQuestion(e.target.value)}
+          onPressEnter={handleSend}
+          style={{ flex: 1, fontSize: 15 }}
+        />
+        <Button 
+          type="primary" 
+          shape="circle" 
+          icon={<SendOutlined />} 
+          onClick={handleSend}
+          disabled={!question.trim()}
+        />
       </div>
+      
+      <Paragraph type="secondary" style={{ marginTop: 16 }}>
+        Try: "查询销售订单" or "按客户统计金额"
+      </Paragraph>
     </div>
-  ));
+  );
 
-  return (
-    <Layout style={{ height: '100vh', background: '#f0f2f5' }}>
-      {/* 左侧对话区 */}
-      <Sider width="40%" theme="light" style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid #e8e8e8' }}>
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Title level={4} style={{ margin: 0 }}>💬 Chat Agent</Title>
-          <Button type="text" icon={<DeleteOutlined />} onClick={() => {setMessages([]); setSessionId(null); setCurrentResult(null);}} />
-        </div>
+  // 对话状态：输入框在底部
+  const renderChatMode = () => (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: 24, paddingTop: 20 }}>
+        <Title level={3} style={{ marginBottom: 4 }}>🔥 Semantic SQL Agent</Title>
+        <Paragraph type="secondary" style={{ marginBottom: 0 }}>AI-Powered Data Analytics</Paragraph>
+      </div>
+
+      {/* Messages */}
+      <div style={{ flex: 1, overflow: 'auto', marginBottom: 16 }}>
+        {messages.map((msg, idx) => (
+          <Card key={idx} size="small" style={{ marginBottom: 12, background: msg.role === 'user' ? '#e6f7ff' : '#f6ffed' }}>
+            <Text strong>{msg.role === 'user' ? '❓ Question: ' : '💡 Insight: '}</Text>
+            <div style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>{msg.content}</div>
+          </Card>
+        ))}
         
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 16px' }}>
-          {renderMessages()}
-          {loading && <div style={{ textAlign: 'center' }}><Spin tip="AI 思考中..." /></div>}
-          <div ref={messagesEndRef} />
-        </div>
+        {loading && <div style={{ textAlign: 'center', padding: 20 }}><Spin tip="AI is thinking..." /></div>}
+      </div>
 
-        <div style={{ padding: '16px', background: '#fff' }}>
-          <div style={{ border: '1px solid #d9d9d9', borderRadius: '12px', padding: '8px' }}>
-            <TextArea
-              value={question}
-              onChange={e => setQuestion(e.target.value)}
-              placeholder="问我任何关于数据的问题..."
-              autoSize={{ minRows: 1, maxRows: 6 }}
-              onPressEnter={e => { if (!e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              style={{ border: 'none', boxShadow: 'none', resize: 'none' }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-              <Button type="text" icon={<PaperClipOutlined />} onClick={() => fileInputRef.current?.click()} loading={uploading} />
-              <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={e => handleUpload(e.target.files[0])} />
-              <Button type="primary" shape="round" icon={<SendOutlined />} onClick={handleSend} disabled={!question.trim()}>发送</Button>
-            </div>
-          </div>
-        </div>
-      </Sider>
-
-      {/* 右侧结果展示区 */}
-      <Content style={{ padding: '24px', overflowY: 'auto' }}>
-        {error && <Alert message={error} type="error" showIcon closable style={{ marginBottom: 16 }} />}
-        
-        {!currentResult ? (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: '#bfbfbf' }}>
-            <DatabaseOutlined style={{ fontSize: 64, marginBottom: 16 }} />
-            <Paragraph>暂无执行结果，请在左侧提问</Paragraph>
-          </div>
-        ) : (
-          <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            {/* SQL展示卡片 */}
-            {currentResult.sql && (
-              <Card title={<span><ConsoleSqlOutlined /> Generated SQL</span>} size="small" extra={<Tag color="blue">PostgreSQL</Tag>}>
-                <pre style={{ background: '#1d1d1d', color: '#a9b7c6', padding: '16px', borderRadius: '8px', overflow: 'auto', fontSize: '13px' }}>
+      {/* Result */}
+      {currentResult && (
+        <>
+          {/* Show SQL */}
+          <div style={{ marginBottom: 12 }}>
+            <Button size="small" icon={<ConsoleSqlOutlined />} onClick={() => setShowSql(!showSql)}>
+              {showSql ? "Hide SQL" : "Show SQL"}
+            </Button>
+            {showSql && currentResult.sql && (
+              <Card size="small" style={{ marginTop: 8 }}>
+                <pre style={{ background: '#1e1e1e', color: '#c5c5c5', padding: 12, borderRadius: 6, fontSize: 12, overflow: 'auto' }}>
                   {currentResult.sql}
                 </pre>
               </Card>
             )}
+          </div>
 
-            {/* 数据表格卡片 */}
-            {currentResult.result?.data && (
-              <Card title={<span><DatabaseOutlined /> Execution Result</span>} size="small">
-                <Table 
-                  dataSource={currentResult.result.data}
-                  columns={currentResult.result.columns?.map(col => ({ title: col, dataIndex: col, key: col }))}
-                  size="small"
-                  pagination={{ pageSize: 8 }}
-                  scroll={{ x: 'max-content' }}
-                />
-              </Card>
-            )}
-          </Space>
-        )}
+          {/* Table */}
+          {currentResult.result?.data && (
+            <Card title={<><DatabaseOutlined /> Query Result ({currentResult.result.row_count} rows)</>} style={{ marginBottom: 16 }}>
+              <Table 
+                dataSource={currentResult.result.data}
+                columns={currentResult.result.columns?.map(col => ({ title: col, dataIndex: col, key: col }))}
+                pagination={{ pageSize: 8 }}
+                scroll={{ x: 'max-content' }}
+                size="small"
+              />
+            </Card>
+          )}
+        </>
+      )}
+
+      {/* Error */}
+      {error && (
+        <Alert message="Error" description={error} type="error" showIcon closable onClose={() => setError(null)} style={{ marginBottom: 16 }} />
+      )}
+
+      {/* Input at bottom */}
+      <div style={{ border: '1px solid #ddd', borderRadius: 28, padding: '8px 12px', display: 'flex', alignItems: 'center', background: '#fff' }}>
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          accept=".txt,.md,.pdf,.docx"
+          onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])}
+        />
+        <Button type="text" icon={<PaperClipOutlined />} onClick={() => fileInputRef.current?.click()} loading={uploading} />
+        <Input
+          bordered={false}
+          placeholder="Ask a question..."
+          value={question}
+          onChange={e => setQuestion(e.target.value)}
+          onPressEnter={handleSend}
+          style={{ flex: 1, fontSize: 15 }}
+        />
+        <Button type="primary" shape="circle" icon={<SendOutlined />} onClick={handleSend} disabled={!question.trim()} />
+      </div>
+
+      {/* Clear */}
+      <div style={{ textAlign: 'center', marginTop: 8 }}>
+        <Button size="small" icon={<DeleteOutlined />} onClick={handleClear}>Clear</Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <Layout style={{ height: '100vh', background: '#f5f5f5' }}>
+      <Content style={{ maxWidth: 900, margin: '0 auto', padding: 24, display: 'flex', flexDirection: 'column' }}>
+        {isChatting ? renderChatMode() : renderWelcome()}
       </Content>
     </Layout>
   );
