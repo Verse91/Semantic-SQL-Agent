@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+.vite/
+
+# Environment files (keep .env.example)
+.env
+.env.local
+.env.development
+.env.test
+.env.staging
+.env.production
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

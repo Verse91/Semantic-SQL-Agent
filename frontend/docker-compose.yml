@@ -1,0 +1,28 @@
+# Docker Compose 用于快速启动前端
+# 
+# 使用方式:
+#   1. 修改 .env.production 中的 VITE_API_BASE 为实际后端地址
+#   2. docker-compose up -d
+#
+# 环境变量会通过 docker build 时的 ARG 传入
+
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # 后端 API 地址 (修改这里指向你的内网后端)
+        - API_BASE=http://localhost:8001
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    # 可选: 链接到后端服务
+    # networks:
+    #   - frontend-network
+
+# networks:
+#   frontend-network:
+#     driver: bridge

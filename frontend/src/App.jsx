@@ -12,7 +12,7 @@ import axios from 'axios';
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
-const API_BASE = 'http://localhost:8001';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8001';
 
 function App() {
   const [question, setQuestion] = useState('');
