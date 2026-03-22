@@ -10,6 +10,13 @@ from skills.base import BaseSkill
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
+# 导入 trace 模块
+try:
+    from tracing import log_repair_sql
+    HAS_TRACING = True
+except ImportError:
+    HAS_TRACING = False
+
 
 class RepairSQLSkill(BaseSkill):
     """SQL 修复 Skill"""
@@ -41,11 +48,19 @@ class RepairSQLSkill(BaseSkill):
         
         if result.get("error"):
             state["error"] = f"Repair failed: {result['error']}"
+            
+            # Trace logging
+            if HAS_TRACING:
+                log_repair_sql(original_sql, "", error, 1)
         else:
             fixed_sql = result.get("sql", "")
             state["generated_sql"] = fixed_sql
             state["validated_sql"] = fixed_sql
             state["error"] = None
+            
+            # Trace logging
+            if HAS_TRACING:
+                log_repair_sql(original_sql, fixed_sql, error, 1)
         
         return state
 

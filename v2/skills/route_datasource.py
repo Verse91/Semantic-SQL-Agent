@@ -5,6 +5,13 @@ import re
 from typing import Dict, Any
 from skills.base import BaseSkill
 
+# 导入 trace 模块
+try:
+    from tracing import log_route_datasource
+    HAS_TRACING = True
+except ImportError:
+    HAS_TRACING = False
+
 
 class RouteDatasourceSkill(BaseSkill):
     """数据源路由 Skill"""
@@ -31,6 +38,10 @@ class RouteDatasourceSkill(BaseSkill):
             state["datasource"] = "hana"
         else:
             state["datasource"] = "trino"
+        
+        # Trace logging
+        if HAS_TRACING:
+            log_route_datasource(state["datasource"], tables)
         
         return state
     

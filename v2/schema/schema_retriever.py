@@ -13,6 +13,13 @@ sys.path.insert(0, project_root)
 from schema.schema_loader import SchemaLoader
 from schema.schema_index import SchemaIndex
 
+# 导入 trace 模块
+try:
+    from tracing import log_schema_retriever
+    HAS_TRACING = True
+except ImportError:
+    HAS_TRACING = False
+
 
 class SchemaRetriever:
     """Schema 检索器"""
@@ -63,7 +70,23 @@ class SchemaRetriever:
             pass
         
         # 回退：返回所有表 Schema
-        return self.loader.get_schema_text()
+        schema_text = self.loader.get_schema_text()
+        
+        # 提取表名列表
+        tables = self._extract_tables(schema_text)
+        
+        # Trace logging
+        if HAS_TRACING:
+            log_schema_retriever(query, tables)
+        
+        return schema_text
+    
+    def _extract_tables(self, schema_text: str) -> List[str]:
+        """从 schema 文本中提取表名"""
+        import re
+        # 匹配 ## 表名 格式
+        tables = re.findall(r'## (\w+)', schema_text)
+        return tables[:10]  # 限制数量
     
     def get_table_schema(self, table_name: str) -> dict:
         """获取单个表的 Schema"""

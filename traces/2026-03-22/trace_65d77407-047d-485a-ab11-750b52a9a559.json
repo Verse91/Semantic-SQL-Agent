@@ -1,0 +1,9 @@
+{
+  "trace_id": "65d77407-047d-485a-ab11-750b52a9a559",
+  "session_id": "session-123",
+  "query": "debug query",
+  "start_time": "2026-03-22T22:08:23.787650",
+  "end_time": "2026-03-22T22:08:23.827308",
+  "status": "success",
+  "steps": []
+}

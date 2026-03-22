@@ -1,0 +1,9 @@
+{
+  "trace_id": "f550f740-34d3-4667-9ddb-89a9c0f0176f",
+  "session_id": "s2",
+  "query": "debug2",
+  "start_time": "2026-03-22T22:08:37.749552",
+  "end_time": "2026-03-22T22:08:37.802016",
+  "status": "success",
+  "steps": []
+}

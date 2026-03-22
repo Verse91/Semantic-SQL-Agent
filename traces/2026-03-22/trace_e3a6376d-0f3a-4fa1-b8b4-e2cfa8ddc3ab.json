@@ -1,0 +1,49 @@
+{
+  "trace_id": "e3a6376d-0f3a-4fa1-b8b4-e2cfa8ddc3ab",
+  "session_id": "api-session",
+  "query": "API test",
+  "start_time": "2026-03-22T22:12:25.942956",
+  "end_time": "2026-03-22T22:12:25.967958",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "89a1dcb1-7a4f-434f-ae87-85aaed77211b",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-22T22:12:25.966784",
+      "input": {
+        "sql": "SELECT 1"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "26809744-6206-4197-8dba-077b018f8679",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-22T22:12:25.966849",
+      "input": {
+        "available_datasources": []
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "14e66c00-e6eb-402b-83f9-1e7db207c6d3",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-22T22:12:25.967935",
+      "input": {
+        "sql": "SELECT 1"
+      },
+      "output": {
+        "row_count": 1,
+        "execution_time_ms": 1.0552406311035156,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

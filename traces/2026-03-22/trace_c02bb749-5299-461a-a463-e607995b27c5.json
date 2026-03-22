@@ -1,0 +1,9 @@
+{
+  "trace_id": "c02bb749-5299-461a-a463-e607995b27c5",
+  "session_id": "session-999",
+  "query": "direct test",
+  "start_time": "2026-03-22T22:05:47.143465",
+  "end_time": "2026-03-22T22:05:47.143609",
+  "status": "success",
+  "steps": []
+}

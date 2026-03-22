@@ -10,6 +10,13 @@ from skills.base import BaseSkill
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
+# 导入 trace 模块
+try:
+    from tracing import log_generate_sql
+    HAS_TRACING = True
+except ImportError:
+    HAS_TRACING = False
+
 
 class GenerateSQLSkill(BaseSkill):
     """SQL 生成 Skill"""
@@ -36,6 +43,10 @@ class GenerateSQLSkill(BaseSkill):
         
         # 直接调用 MiniMax API
         sql = self._call_minimax(prompt)
+        
+        # Trace logging (always log, whether success or failure)
+        if HAS_TRACING:
+            log_generate_sql(state.get("retrieved_tables", []), sql if sql else "FAILED")
         
         if sql:
             state["generated_sql"] = sql

@@ -1,0 +1,24 @@
+{
+  "trace_id": "02a447f7-1334-4ada-b86c-c4c94cd7c254",
+  "session_id": "sess2",
+  "query": "test2",
+  "start_time": "2026-03-22T22:08:56.991172",
+  "end_time": "2026-03-22T22:08:57.014980",
+  "status": "failed",
+  "steps": [
+    {
+      "step_id": "8214e763-30ae-4f79-94ee-152b53c8fe40",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-22T22:08:57.014965",
+      "input": {
+        "input_tables": [
+          "t1"
+        ]
+      },
+      "output": {
+        "generated_sql": "FAILED"
+      },
+      "metadata": {}
+    }
+  ]
+}

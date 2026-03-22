@@ -1,0 +1,24 @@
+{
+  "trace_id": "000726a2-c92e-49b3-b2fc-57865f26fbc5",
+  "session_id": "test-session",
+  "query": "test query",
+  "start_time": "2026-03-22T21:58:37.379557",
+  "end_time": "2026-03-22T21:58:37.379862",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "1b9e86a9-0ba6-46a7-bf5f-183aaed7643e",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-22T21:58:37.379847",
+      "input": {
+        "sql": "SELECT 1"
+      },
+      "output": {
+        "row_count": 1,
+        "execution_time_ms": 10.5,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

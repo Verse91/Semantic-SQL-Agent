@@ -8,10 +8,18 @@ from psycopg2 import pool
 from typing import Dict, Any
 from skills.base import BaseSkill
 import logging
+import time
 
 # 添加父项目路径
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
+
+# 导入 trace 模块
+try:
+    from tracing import log_execute_sql
+    HAS_TRACING = True
+except ImportError:
+    HAS_TRACING = False
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +46,7 @@ class ExecuteSQLSkill(BaseSkill):
         """执行 SQL"""
         sql = state.get("validated_sql", "")
         datasource = state.get("datasource", "postgresql")
+        start_time = time.time()
         
         if not sql:
             state["error"] = "No SQL to execute"
@@ -72,14 +81,25 @@ class ExecuteSQLSkill(BaseSkill):
                 "row_count": len(data)
             }
             
+            execution_time_ms = (time.time() - start_time) * 1000
+            
             state["execution_result"] = result
             state["error"] = None
-            logger.info(f"Query successful: {len(data)} rows")
+            logger.info(f"Query successful: {len(data)} rows, {execution_time_ms:.2f}ms")
+            
+            # Trace logging
+            if HAS_TRACING:
+                log_execute_sql(sql, len(data), execution_time_ms, None)
             
         except Exception as e:
+            execution_time_ms = (time.time() - start_time) * 1000
             logger.error(f"SQL Error: {e}")
             state["execution_result"] = None
             state["error"] = str(e)
+            
+            # Trace logging
+            if HAS_TRACING:
+                log_execute_sql(sql, 0, execution_time_ms, str(e))
         
         finally:
             # 归还连接到池

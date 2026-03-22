@@ -20,6 +20,20 @@ import uuid
 from memory.conversation_memory import get_conversation_memory
 from memory.session_store import get_session_store
 
+# 导入 trace 模块
+try:
+    from tracing import start_trace, end_trace
+    # 预加载 skills 以确保模块实例一致
+    from skills.generate_sql import generate_sql_skill
+    from skills.validate_sql import validate_sql_skill
+    from skills.route_datasource import route_datasource_skill
+    from skills.execute_sql import execute_sql_skill
+    from skills.format_result import format_result_skill
+    from schema.schema_retriever import retrieve_schema
+    HAS_TRACING = True
+except ImportError:
+    HAS_TRACING = False
+
 app = FastAPI(
     title="Semantic-SQL-Agent V2",
     description="Data Agent with LangGraph",
@@ -76,6 +90,10 @@ def chat(request: ChatRequest):
         session_id = session_store.create()
     
     try:
+        # 开始 Trace
+        if HAS_TRACING:
+            start_trace(request.query, session_id)
+        
         # 获取对话历史
         history = memory.get_recent(session_id, count=4)
         
@@ -143,10 +161,18 @@ def chat(request: ChatRequest):
         )
         
     except Exception as e:
+        # 结束 Trace (failed)
+        if HAS_TRACING:
+            end_trace("failed")
+        
         return ChatResponse(
             session_id=session_id,
             error=str(e)
         )
+    
+    # 结束 Trace (success)
+    if HAS_TRACING:
+        end_trace("success")
 
 
 # ========== V1 兼容 API ==========
@@ -347,3 +373,31 @@ async def upload_fs(
         
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+# ========== Trace API ==========
+
+@app.get("/api/traces")
+def list_traces(date: str = None, limit: int = 50):
+    """列出历史 Traces"""
+    try:
+        from tracing import get_storage
+        storage = get_storage()
+        traces = storage.list_traces(date, limit)
+        return {"traces": traces}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/traces/{trace_id}")
+def get_trace(trace_id: str, date: str = None):
+    """获取单条 Trace"""
+    try:
+        from tracing import get_storage
+        storage = get_storage()
+        trace = storage.get(trace_id, date)
+        if trace:
+            return trace
+        return {"error": "Trace not found"}
+    except Exception as e:
+        return {"error": str(e)}

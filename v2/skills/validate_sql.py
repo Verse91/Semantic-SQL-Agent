@@ -4,6 +4,13 @@ SQL 校验 Skill
 from typing import Dict, Any
 from skills.base import BaseSkill
 
+# 导入 trace 模块
+try:
+    from tracing import log_validate_sql
+    HAS_TRACING = True
+except ImportError:
+    HAS_TRACING = False
+
 
 class ValidateSQLSkill(BaseSkill):
     """SQL 校验 Skill"""
@@ -40,6 +47,11 @@ class ValidateSQLSkill(BaseSkill):
         
         # 校验通过
         state["validated_sql"] = sql
+        
+        # Trace logging
+        if HAS_TRACING:
+            log_validate_sql(sql, True, "SELECT only")
+        
         return state
 
 

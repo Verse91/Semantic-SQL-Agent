@@ -1,0 +1,9 @@
+{
+  "trace_id": "d1154fa7-8bbb-4ecf-9924-667422b87fe4",
+  "session_id": "test-session-123",
+  "query": "测试查询",
+  "start_time": "2026-03-22T22:03:30.104253",
+  "end_time": "2026-03-22T22:03:30.156209",
+  "status": "success",
+  "steps": []
+}
