@@ -9,7 +9,7 @@ import sys
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(project_root, '..'))
 
-from app.trino_service import execute_query as trino_execute_query
+from v1.trino_service import execute_query as trino_execute_query
 
 
 class TrinoExecutor:

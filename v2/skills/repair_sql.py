@@ -43,7 +43,7 @@ class RepairSQLSkill(BaseSkill):
         )
         
         # 调用 LLM 修复
-        from app.llm_service import generate_sql as llm_generate_sql
+        from v1.llm_service import generate_sql as llm_generate_sql
         result = llm_generate_sql(prompt)
         
         if result.get("error"):
