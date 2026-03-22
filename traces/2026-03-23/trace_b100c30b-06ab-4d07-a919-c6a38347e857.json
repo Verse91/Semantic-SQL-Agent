@@ -1,0 +1,87 @@
+{
+  "trace_id": "b100c30b-06ab-4d07-a919-c6a38347e857",
+  "session_id": "ee3e2502-ae08-4432-8585-333307919134",
+  "query": "test today",
+  "start_time": "2026-03-22T23:24:01.877513",
+  "end_time": "2026-03-23T07:24:04.451216",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "02d50d71-c6c5-433f-a8f5-35c5732c5773",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-22T23:24:01.888015",
+      "input": {
+        "query": "test today"
+      },
+      "output": {
+        "retrieved_tables": [
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "sd",
+          "sd"
+        ],
+        "similarity_scores": []
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "ccc46cfe-1cc4-4d94-93bb-e14cdd793ae0",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-22T23:24:04.438990",
+      "input": {
+        "input_tables": []
+      },
+      "output": {
+        "generated_sql": "SELECT * \nFROM md.kna1 \nWHERE DATE(created_at) = CURRENT_DATE;"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "dc318aad-f686-4970-8c69-927b5bc85b93",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-22T23:24:04.439066",
+      "input": {
+        "sql": "SELECT * \nFROM md.kna1 \nWHERE DATE(created_at) = CURRENT_DATE;"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "c9214f05-3ea9-401f-a783-1440856ee6dd",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-22T23:24:04.439342",
+      "input": {
+        "available_datasources": [
+          "MD"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "2c8ec994-3cb3-4eb5-9c98-81ed84944ebb",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-22T23:24:04.448411",
+      "input": {
+        "sql": "SELECT * \nFROM md.kna1 \nWHERE DATE(created_at) = CURRENT_DATE;"
+      },
+      "output": {
+        "row_count": 0,
+        "execution_time_ms": 8.95071029663086,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

@@ -26,7 +26,7 @@ class TraceStorage:
     
     def _get_date_dir(self) -> Path:
         """获取当日目录"""
-        today = datetime.utcnow().strftime("%Y-%m-%d")
+        today = datetime.now().strftime("%Y-%m-%d")
         date_dir = self.base_dir / today
         date_dir.mkdir(parents=True, exist_ok=True)
         return date_dir

@@ -1,0 +1,90 @@
+{
+  "trace_id": "7df7bb7e-0a1d-4668-8b49-36d321e8238b",
+  "session_id": "f6112f3c-1070-4fbc-83a9-57ae17d3e218",
+  "query": "show sales orders",
+  "start_time": "2026-03-22T23:21:19.627399",
+  "end_time": "2026-03-22T23:21:24.912770",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "f2563e7c-8a70-4de4-bfbf-6cc77ce689cd",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-22T23:21:19.627546",
+      "input": {
+        "query": "show sales orders"
+      },
+      "output": {
+        "retrieved_tables": [
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "sd",
+          "sd"
+        ],
+        "similarity_scores": []
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "7b579f9d-3bd3-4fd0-b969-ffdaaaf11d44",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-22T23:21:24.904046",
+      "input": {
+        "input_tables": []
+      },
+      "output": {
+        "generated_sql": "SELECT \n    h.vbeln AS sales_order,\n    h.auart AS order_type,\n    h.vkorg AS sales_org,\n    h.erdat AS order_date,\n    h.netwr AS order_value,\n    c.name1 AS customer_name,\n    c.land1 AS customer_country,\n    l.posnr AS line_item,\n    m.maktx AS material_description,\n    l.kwmeng AS quantity,\n    l.netwr AS line_value\nFROM sd.vbak h\nLEFT JOIN sd.vbap l ON h.vbeln = l.vbeln\nLEFT JOIN md.kna1 c ON h.kunnr = c.kunnr\nLEFT JOIN md.makt m ON l.matnr = m.matnr AND m.spras = 'E'\nORDER BY h.vbeln, l.posnr"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "53de1e69-ccdc-45f9-a7f4-30005114749f",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-22T23:21:24.904141",
+      "input": {
+        "sql": "SELECT \n    h.vbeln AS sales_order,\n    h.auart AS order_type,\n    h.vkorg AS sales_org,\n    h.erdat AS order_date,\n    h.netwr AS order_value,\n    c.name1 AS customer_name,\n    c.land1 AS customer_country,\n    l.posnr AS line_item,\n    m.maktx AS material_description,\n    l.kwmeng AS quantity,\n    l.netwr AS line_value\nFROM sd.vbak h\nLEFT JOIN sd.vbap l ON h.vbeln = l.vbeln\nLEFT JOIN md.kna1 c ON h.kunnr = c.kunnr\nLEFT JOIN md.makt m ON l.matnr = m.matnr AND m.spras = 'E'\nORDER BY h.vbeln, l.posnr"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "0749e71f-2f03-437a-9be1-314ece4e70ab",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-22T23:21:24.904273",
+      "input": {
+        "available_datasources": [
+          "SD",
+          "SD",
+          "MD",
+          "MD"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "91315650-0714-42bc-be05-966fcb9918b9",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-22T23:21:24.910023",
+      "input": {
+        "sql": "SELECT \n    h.vbeln AS sales_order,\n    h.auart AS order_type,\n    h.vkorg AS sales_org,\n    h.erdat AS order_date,\n    h.netwr AS order_value,\n    c.name1 AS customer_name,\n    c.land1 AS customer_country,\n    l.posnr AS line_item,\n    m.maktx AS material_description,\n    l.kwmeng AS quantity,\n    l.netwr AS line_value\nFROM sd.vbak h\nLEFT JOIN sd.vbap l ON h.vbeln = l.vbeln\nLEFT JOIN md.kna1 c ON h.kunnr = c.kunnr\nLEFT JOIN md.makt m ON l.matnr = m.matnr AND m.spras = 'E'\nORDER BY h.vbeln, l.posnr"
+      },
+      "output": {
+        "row_count": 17,
+        "execution_time_ms": 5.666017532348633,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

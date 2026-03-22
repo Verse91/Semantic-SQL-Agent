@@ -33,7 +33,7 @@ class QueryTrace(BaseModel):
     
     def finish(self, status: str = "success"):
         """结束 Trace"""
-        self.end_time = datetime.utcnow()
+        self.end_time = datetime.now()
         self.status = status
     
     def to_dict(self) -> dict:

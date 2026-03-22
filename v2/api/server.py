@@ -2,6 +2,11 @@
 FastAPI Server
 """
 import os
+import sys
+
+# 添加父目录到 Python 路径
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from dotenv import load_dotenv
 
 # 加载 .env 文件
@@ -153,6 +158,10 @@ def chat(request: ChatRequest):
             "last_sql": result.get("validated_sql", "")
         })
         
+        # 结束 Trace (success)
+        if HAS_TRACING:
+            end_trace("success")
+        
         return ChatResponse(
             session_id=session_id,
             sql=result.get("validated_sql"),
@@ -169,10 +178,6 @@ def chat(request: ChatRequest):
             session_id=session_id,
             error=str(e)
         )
-    
-    # 结束 Trace (success)
-    if HAS_TRACING:
-        end_trace("success")
 
 
 # ========== V1 兼容 API ==========

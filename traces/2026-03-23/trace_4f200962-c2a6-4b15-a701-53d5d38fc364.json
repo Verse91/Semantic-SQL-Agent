@@ -1,0 +1,87 @@
+{
+  "trace_id": "4f200962-c2a6-4b15-a701-53d5d38fc364",
+  "session_id": "7002bd95-f97e-4b9f-827d-04094ea7fd16",
+  "query": "show suppliers",
+  "start_time": "2026-03-22T23:25:33.076338",
+  "end_time": "2026-03-23T07:25:35.825583",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "67e521ae-b108-4200-965d-a6c5d52e457b",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-22T23:25:33.076438",
+      "input": {
+        "query": "show suppliers"
+      },
+      "output": {
+        "retrieved_tables": [
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "sd",
+          "sd"
+        ],
+        "similarity_scores": []
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "c7ee8b29-7d43-4607-979c-e74a3a47a69a",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-22T23:25:35.817609",
+      "input": {
+        "input_tables": []
+      },
+      "output": {
+        "generated_sql": "SELECT \n    lifnr,\n    name1,\n    land1,\n    city,\n    created_at\nFROM md.lfa1;"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "089267a1-dc3d-4ade-addb-379abf163929",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-22T23:25:35.817686",
+      "input": {
+        "sql": "SELECT \n    lifnr,\n    name1,\n    land1,\n    city,\n    created_at\nFROM md.lfa1;"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "a9a452c9-8186-4226-a1c0-d61c086321f1",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-22T23:25:35.817752",
+      "input": {
+        "available_datasources": [
+          "MD"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "118a7232-f4d8-41d8-b0ed-4d8bb2b63515",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-22T23:25:35.822267",
+      "input": {
+        "sql": "SELECT \n    lifnr,\n    name1,\n    land1,\n    city,\n    created_at\nFROM md.lfa1;"
+      },
+      "output": {
+        "row_count": 10,
+        "execution_time_ms": 4.395008087158203,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

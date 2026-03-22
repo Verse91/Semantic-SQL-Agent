@@ -41,7 +41,8 @@ function App() {
 
   const fetchTraces = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/traces?date=2026-03-22&limit=10`);
+      const today = new Date().toISOString().slice(0, 10);
+      const response = await axios.get(`${API_BASE}/api/traces?date=${today}&limit=10`);
       setTraces(response.data.traces || []);
     } catch (e) {
       console.error('Failed to fetch traces:', e);

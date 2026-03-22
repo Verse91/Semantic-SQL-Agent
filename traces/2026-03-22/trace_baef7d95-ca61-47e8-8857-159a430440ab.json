@@ -1,0 +1,87 @@
+{
+  "trace_id": "baef7d95-ca61-47e8-8857-159a430440ab",
+  "session_id": "0e80b839-8414-42cd-a1b3-bc5419b60504",
+  "query": "show sales orders",
+  "start_time": "2026-03-22T23:21:07.670997",
+  "end_time": "2026-03-22T23:21:12.735242",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "c627e212-7f96-4a07-81ae-598f226d2bcd",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-22T23:21:07.671199",
+      "input": {
+        "query": "show sales orders"
+      },
+      "output": {
+        "retrieved_tables": [
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "md",
+          "sd",
+          "sd"
+        ],
+        "similarity_scores": []
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "e73c4df3-e73d-4c7f-8d1d-75a7e639dc29",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-22T23:21:12.717834",
+      "input": {
+        "input_tables": []
+      },
+      "output": {
+        "generated_sql": "SELECT \n    vbak.vbeln AS sales_order,\n    vbak.auart AS order_type,\n    vbak.vkorg AS sales_org,\n    vbak.kunnr AS customer,\n    vbak.erdat AS order_date,\n    vbak.netwr AS net_value\nFROM sd.vbak"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "0f91e4c3-6269-462a-8bc5-6911c2a76a3c",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-22T23:21:12.717936",
+      "input": {
+        "sql": "SELECT \n    vbak.vbeln AS sales_order,\n    vbak.auart AS order_type,\n    vbak.vkorg AS sales_org,\n    vbak.kunnr AS customer,\n    vbak.erdat AS order_date,\n    vbak.netwr AS net_value\nFROM sd.vbak"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "1cdbe231-deca-46c4-ae2a-b0440b6ecd4a",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-22T23:21:12.718025",
+      "input": {
+        "available_datasources": [
+          "SD"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "694de48a-bafc-440a-9fcc-844e555d9b4b",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-22T23:21:12.731144",
+      "input": {
+        "sql": "SELECT \n    vbak.vbeln AS sales_order,\n    vbak.auart AS order_type,\n    vbak.vkorg AS sales_org,\n    vbak.kunnr AS customer,\n    vbak.erdat AS order_date,\n    vbak.netwr AS net_value\nFROM sd.vbak"
+      },
+      "output": {
+        "row_count": 10,
+        "execution_time_ms": 12.943029403686523,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

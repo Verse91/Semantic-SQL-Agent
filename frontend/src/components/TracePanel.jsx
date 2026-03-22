@@ -24,7 +24,8 @@ export function TracePanel({ traceId, onClose }) {
   const fetchTrace = async () => {
     try {
       const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8001';
-      const response = await fetch(`${API_BASE}/api/traces/${traceId}?date=2026-03-22`);
+      const today = new Date().toISOString().slice(0, 10);
+      const response = await fetch(`${API_BASE}/api/traces/${traceId}?date=${today}`);
       const data = await response.json();
       setTrace(data);
     } catch (e) {
