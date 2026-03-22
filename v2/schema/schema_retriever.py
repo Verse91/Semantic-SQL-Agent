@@ -75,17 +75,32 @@ class SchemaRetriever:
         # 提取表名列表
         tables = self._extract_tables(schema_text)
         
-        # Trace logging
+        # Trace logging (scores is empty since vector similarity not implemented)
         if HAS_TRACING:
-            log_schema_retriever(query, tables)
+            log_schema_retriever(query, tables, scores=[])
         
         return schema_text
+    
+    def retrieve_with_tables(self, query: str, top_k: int = 5) -> tuple:
+        """
+        检索相关 Schema 并返回表名列表
+        
+        Args:
+            query: 用户查询
+            top_k: 返回表数量
+            
+        Returns:
+            (schema_text, tables) 元组
+        """
+        schema_text = self.retrieve(query, top_k)
+        tables = self._extract_tables(schema_text)
+        return schema_text, tables
     
     def _extract_tables(self, schema_text: str) -> List[str]:
         """从 schema 文本中提取表名"""
         import re
-        # 匹配 ## 表名 格式
-        tables = re.findall(r'## (\w+)', schema_text)
+        # 匹配 ## schema.table 格式 (如 md.kna1, sd.vbak)
+        tables = re.findall(r'## (\w+\.\w+)', schema_text)
         return tables[:10]  # 限制数量
     
     def get_table_schema(self, table_name: str) -> dict:

@@ -1,0 +1,99 @@
+{
+  "trace_id": "cfc1f1bb-8a0d-409f-a489-4b034300a550",
+  "session_id": "ff4b1f76-762f-4732-b69a-8253b5ed60a6",
+  "query": "show products",
+  "start_time": "2026-03-22T23:41:47.179530",
+  "end_time": "2026-03-23T07:41:57.376113",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "d29774a5-56c6-4d77-9215-42ce3f756f73",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-22T23:41:47.190151",
+      "input": {
+        "query": "show products"
+      },
+      "output": {
+        "retrieved_tables": [
+          "md.kna1",
+          "md.knvv",
+          "md.lfa1",
+          "md.mara",
+          "md.makt",
+          "md.marc",
+          "md.t001w",
+          "md.t001l",
+          "sd.vbak",
+          "sd.vbap"
+        ],
+        "similarity_scores": []
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "a6f1146f-b8aa-4bfd-9032-e196e9a4e1ce",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-22T23:41:57.366039",
+      "input": {
+        "input_tables": [
+          "md.kna1",
+          "md.knvv",
+          "md.lfa1",
+          "md.mara",
+          "md.makt",
+          "md.marc",
+          "md.t001w",
+          "md.t001l",
+          "sd.vbak",
+          "sd.vbap"
+        ]
+      },
+      "output": {
+        "generated_sql": "SELECT \n    a.matnr,\n    a.matkl,\n    a.mtart,\n    a.meins,\n    b.maktx\nFROM md.mara a\nLEFT JOIN md.makt b ON a.matnr = b.matnr AND b.spras = 'C'"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "4fd25d16-337a-4533-9582-003a29a629fd",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-22T23:41:57.366169",
+      "input": {
+        "sql": "SELECT \n    a.matnr,\n    a.matkl,\n    a.mtart,\n    a.meins,\n    b.maktx\nFROM md.mara a\nLEFT JOIN md.makt b ON a.matnr = b.matnr AND b.spras = 'C'"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "c4f059f2-2c2f-4f1e-a1ea-ce5f38b09370",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-22T23:41:57.366514",
+      "input": {
+        "available_datasources": [
+          "MD",
+          "MD"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "10b0f8e5-e936-46b0-8026-3802f2b16130",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-22T23:41:57.372573",
+      "input": {
+        "sql": "SELECT \n    a.matnr,\n    a.matkl,\n    a.mtart,\n    a.meins,\n    b.maktx\nFROM md.mara a\nLEFT JOIN md.makt b ON a.matnr = b.matnr AND b.spras = 'C'"
+      },
+      "output": {
+        "row_count": 20,
+        "execution_time_ms": 5.939960479736328,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

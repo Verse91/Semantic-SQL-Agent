@@ -1,0 +1,87 @@
+{
+  "trace_id": "c826eeaa-2c52-4a5d-b97f-6b439ff8c397",
+  "session_id": "9a47165c-7f7d-4721-b481-1eaf68efd3a3",
+  "query": "show customers",
+  "start_time": "2026-03-22T23:37:38.751308",
+  "end_time": "2026-03-23T07:37:43.193248",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "872ea7dc-fd2d-4e9c-9e28-ec71d6e93016",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-22T23:37:38.762653",
+      "input": {
+        "query": "show customers"
+      },
+      "output": {
+        "retrieved_tables": [
+          "md.kna1",
+          "md.knvv",
+          "md.lfa1",
+          "md.mara",
+          "md.makt",
+          "md.marc",
+          "md.t001w",
+          "md.t001l",
+          "sd.vbak",
+          "sd.vbap"
+        ],
+        "similarity_scores": []
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "2a2ce8ec-c9c7-4a9c-bf93-8f271c497c83",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-22T23:37:43.185428",
+      "input": {
+        "input_tables": []
+      },
+      "output": {
+        "generated_sql": "SELECT kunnr, name1, land1, city, region, created_at\nFROM md.kna1"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "fd952e0f-764b-44b5-b534-b67966d53400",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-22T23:37:43.185522",
+      "input": {
+        "sql": "SELECT kunnr, name1, land1, city, region, created_at\nFROM md.kna1"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "a97071e9-1a0f-4a24-a013-7c1ce3306464",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-22T23:37:43.185804",
+      "input": {
+        "available_datasources": [
+          "MD"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "4ef54d3a-f495-488a-9174-87a7b91f39ea",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-22T23:37:43.189725",
+      "input": {
+        "sql": "SELECT kunnr, name1, land1, city, region, created_at\nFROM md.kna1"
+      },
+      "output": {
+        "row_count": 10,
+        "execution_time_ms": 3.827810287475586,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

@@ -108,16 +108,18 @@ def chat(request: ChatRequest):
         from skills.route_datasource import route_datasource_skill
         from skills.execute_sql import execute_sql_skill
         from skills.format_result import format_result_skill
-        from schema.schema_retriever import retrieve_schema
+        from schema.schema_retriever import get_schema_retriever
         
-        # 1. 获取 Schema
-        schema_context = retrieve_schema(request.query)
+        # 1. 获取 Schema (使用 retrieve_with_tables 获取表名列表)
+        retriever = get_schema_retriever()
+        schema_context, retrieved_tables = retriever.retrieve_with_tables(request.query)
         
         # 构建状态
         state = {
             "user_query": request.query,
             "conversation_history": history,
             "schema_context": schema_context,
+            "retrieved_tables": retrieved_tables,
             "generated_sql": "",
             "validated_sql": "",
             "datasource": "postgresql",
@@ -190,17 +192,19 @@ class GenerateSQLRequest(BaseModel):
 async def generate_sql(request: GenerateSQLRequest):
     """V1 兼容: 生成 SQL"""
     from skills.generate_sql import generate_sql_skill
-    from schema.schema_retriever import retrieve_schema
+    from schema.schema_retriever import get_schema_retriever
     
     try:
-        # 获取 schema
-        schema = retrieve_schema(request.question)
+        # 获取 schema 和表名列表
+        retriever = get_schema_retriever()
+        schema, retrieved_tables = retriever.retrieve_with_tables(request.question)
         
         # 构建状态
         state = {
             "user_query": request.question,
             "conversation_history": [],
             "schema_context": schema,
+            "retrieved_tables": retrieved_tables,
             "generated_sql": "",
             "validated_sql": "",
             "datasource": "postgresql",
@@ -330,9 +334,10 @@ async def upload_fs(
         if state.get("error"):
             return {"success": False, "error": f"FS解析失败: {state['error']}"}
         
-        # 5. 获取 Schema
-        from schema.schema_retriever import retrieve_schema
-        state["schema_context"] = retrieve_schema("")
+        # 5. 获取 Schema (使用 retrieve_with_tables 获取表名列表)
+        from schema.schema_retriever import get_schema_retriever
+        retriever = get_schema_retriever()
+        state["schema_context"], state["retrieved_tables"] = retriever.retrieve_with_tables("")
         
         # 6. 生成 Query Plan
         from skills.generate_query_plan import generate_query_plan_skill

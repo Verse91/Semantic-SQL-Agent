@@ -97,9 +97,11 @@ def decide_mode(state: AgentState) -> str:
 
 def retrieve_schema_node(state: AgentState) -> AgentState:
     """Schema 检索节点"""
-    from schema.schema_retriever import retrieve_schema
-    schema_context = retrieve_schema(state["user_query"])
+    from schema.schema_retriever import get_schema_retriever
+    retriever = get_schema_retriever()
+    schema_context, retrieved_tables = retriever.retrieve_with_tables(state["user_query"])
     state["schema_context"] = schema_context
+    state["retrieved_tables"] = retrieved_tables
     return state
 
 
