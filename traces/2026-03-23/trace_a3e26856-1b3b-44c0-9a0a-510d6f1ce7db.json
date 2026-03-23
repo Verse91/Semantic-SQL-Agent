@@ -1,0 +1,94 @@
+{
+  "trace_id": "a3e26856-1b3b-44c0-9a0a-510d6f1ce7db",
+  "session_id": "0f3d1503-efa0-405d-9ba2-a1d5fa526d4c",
+  "query": "show customers",
+  "start_time": "2026-03-23T00:39:50.521010",
+  "end_time": "2026-03-23T08:39:59.919436",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "49fea269-5bf5-4197-b566-705cbbc97e80",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-23T00:39:57.375838",
+      "input": {
+        "query": "show customers"
+      },
+      "output": {
+        "retrieved_tables": [
+          "sd.vbak",
+          "sd.vbrk",
+          "md.knvv",
+          "sd.vbap",
+          "md.kna1"
+        ],
+        "similarity_scores": [
+          "0.41721421480178833",
+          "0.3678344488143921",
+          "0.3496655225753784",
+          "0.3111322224140167",
+          "0.30179697275161743"
+        ]
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "cb582c46-ea34-4c74-917f-90b751162480",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-23T00:39:59.910042",
+      "input": {
+        "input_tables": [
+          "sd.vbak",
+          "sd.vbrk",
+          "md.knvv",
+          "sd.vbap",
+          "md.kna1"
+        ]
+      },
+      "output": {
+        "generated_sql": "SELECT \n    kunnr AS customer_number,\n    name1 AS customer_name,\n    land1 AS country,\n    city,\n    region,\n    created_at\nFROM md.kna1;"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "3b835fa2-3b07-47ab-8125-6ab103d31aa8",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-23T00:39:59.910146",
+      "input": {
+        "sql": "SELECT \n    kunnr AS customer_number,\n    name1 AS customer_name,\n    land1 AS country,\n    city,\n    region,\n    created_at\nFROM md.kna1;"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "e4ba5d45-4868-43fb-8f51-ed58205806e6",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-23T00:39:59.910462",
+      "input": {
+        "available_datasources": [
+          "MD"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "78397302-fed7-4465-bc27-8c282cd0132d",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-23T00:39:59.916174",
+      "input": {
+        "sql": "SELECT \n    kunnr AS customer_number,\n    name1 AS customer_name,\n    land1 AS country,\n    city,\n    region,\n    created_at\nFROM md.kna1;"
+      },
+      "output": {
+        "row_count": 10,
+        "execution_time_ms": 5.568981170654297,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}
