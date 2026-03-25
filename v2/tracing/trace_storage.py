@@ -67,33 +67,52 @@ class TraceStorage:
                 return json.load(f)
         return None
     
-    def list_traces(self, date: str = None, limit: int = 50) -> List[dict]:
-        """列出 traces"""
+    def list_traces(self, date: str = None, limit: int = 50, days: int = 7) -> List[dict]:
+        """列出最近 N 天的 traces（按最新排序）"""
+        from datetime import datetime, timedelta
+
         if date:
-            date_dir = self.base_dir / date
+            # 单日查询
+            date_dirs = [self.base_dir / date] if (self.base_dir / date).exists() else []
         else:
-            # 获取最新的日期目录
-            date_dirs = sorted([d for d in self.base_dir.iterdir() if d.is_dir()], reverse=True)
-            date_dir = date_dirs[0] if date_dirs else None
-        
-        if not date_dir:
+            # 获取最近 N 天的日期目录
+            today = datetime.now()
+            date_dirs = []
+            for i in range(days):
+                d = (today - timedelta(days=i)).strftime("%Y-%m-%d")
+                dd = self.base_dir / d
+                if dd.exists():
+                    date_dirs.append(dd)
+
+        if not date_dirs:
             return []
-        
+
         traces = []
-        for trace_file in sorted(date_dir.glob("trace_*.json"), reverse=True)[:limit]:
-            with open(trace_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                # 只返回概要信息
-                traces.append({
-                    "trace_id": data.get("trace_id"),
-                    "query": data.get("query"),
-                    "status": data.get("status"),
-                    "start_time": data.get("start_time"),
-                    "end_time": data.get("end_time"),
-                    "step_count": len(data.get("steps", []))
-                })
-        
-        return traces
+        for date_dir in date_dirs:
+            for trace_file in sorted(date_dir.glob("trace_*.json"), reverse=True):
+                with open(trace_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    # 提取日期标签
+                    date_label = date_dir.name  # YYYY-MM-DD
+                    start_time = data.get("start_time", "")
+                    # 格式化为友好时间
+                    if start_time:
+                        time_part = start_time[11:19] if len(start_time) > 11 else start_time
+                        date_label = f"{date_dir.name} {time_part}"
+                    traces.append({
+                        "trace_id": data.get("trace_id"),
+                        "query": data.get("query"),
+                        "status": data.get("status"),
+                        "start_time": data.get("start_time"),
+                        "end_time": data.get("end_time"),
+                        "step_count": len(data.get("steps", [])),
+                        "date": date_dir.name,  # YYYY-MM-DD
+                        "date_label": date_label
+                    })
+
+        # 按 start_time 倒序（最新的在前）
+        traces.sort(key=lambda x: x.get("start_time", ""), reverse=True)
+        return traces[:limit]
 
 
 # 全局单例

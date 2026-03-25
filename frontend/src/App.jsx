@@ -41,8 +41,8 @@ function App() {
 
   const fetchTraces = async () => {
     try {
-      const today = new Date().toISOString().slice(0, 10);
-      const response = await axios.get(`${API_BASE}/api/traces?date=${today}&limit=10`);
+      // 获取最近 7 天的 traces，按最新排序
+      const response = await axios.get(`${API_BASE}/api/traces?limit=20&days=7`);
       setTraces(response.data.traces || []);
     } catch (e) {
       console.error('Failed to fetch traces:', e);
@@ -270,23 +270,25 @@ function App() {
           {showTrace && (
             <>
               {/* Trace List */}
-              <Card size="small" title="📜 Recent Traces" style={{ marginBottom: 12 }}>
+              <Card size="small" title={`📜 Recent Traces (${traces.length})`} style={{ marginBottom: 12 }}>
                 <List
                   size="small"
                   dataSource={traces}
+                  locale={{ emptyText: 'No traces yet' }}
                   renderItem={(item) => (
-                    <List.Item 
-                      style={{ cursor: 'pointer' }}
+                    <List.Item
+                      style={{ cursor: 'pointer', padding: '8px 0' }}
                       onClick={() => setSelectedTrace(item.trace_id)}
                     >
-                      <div>
-                        <Text>{item.query}</Text>
-                        <br />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text strong style={{ fontSize: 13 }}>{item.query}</Text>
+                          <Tag color={item.status === 'success' ? 'green' : 'red'}>{item.status}</Tag>
+                        </div>
                         <Text type="secondary" style={{ fontSize: 11 }}>
-                          {item.step_count} steps • {item.status} • {item.start_time?.slice(11, 19)}
+                          📅 {item.date_label} • {item.step_count} steps
                         </Text>
                       </div>
-                      <Tag color={item.status === 'success' ? 'green' : 'red'}>{item.status}</Tag>
                     </List.Item>
                   )}
                 />

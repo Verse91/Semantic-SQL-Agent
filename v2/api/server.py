@@ -327,12 +327,12 @@ async def upload_fs(
 # ========== Trace API ==========
 
 @app.get("/api/traces")
-def list_traces(date: str = None, limit: int = 50):
-    """列出历史 Traces"""
+def list_traces(date: str = None, limit: int = 50, days: int = 7):
+    """列出最近 N 天的 Traces（默认最近 7 天，按最新排序）"""
     try:
         from tracing import get_storage
         storage = get_storage()
-        traces = storage.list_traces(date, limit)
+        traces = storage.list_traces(date, limit, days)
         return {"traces": traces}
     except Exception as e:
         return {"error": str(e)}
