@@ -30,6 +30,7 @@ function App() {
   const [showTrace, setShowTrace] = useState(false);
   const [traces, setTraces] = useState([]);
   const [selectedTrace, setSelectedTrace] = useState(null);
+  const [selectedTraceDate, setSelectedTraceDate] = useState(null);
   const fileInputRef = useRef(null);
 
   // 获取 traces 列表
@@ -114,6 +115,8 @@ function App() {
     setCurrentResult(null);
     setError(null);
     setIsChatting(false);
+    setSelectedTrace(null);
+    setSelectedTraceDate(null);
   };
 
   // 导出 Excel
@@ -278,7 +281,7 @@ function App() {
                   renderItem={(item) => (
                     <List.Item
                       style={{ cursor: 'pointer', padding: '8px 0' }}
-                      onClick={() => setSelectedTrace(item.trace_id)}
+                      onClick={() => { setSelectedTrace(item.trace_id); setSelectedTraceDate(item.date); }}
                     >
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -296,7 +299,7 @@ function App() {
               
               {/* Selected Trace Detail */}
               {selectedTrace && (
-                <TracePanel traceId={selectedTrace} onClose={() => setSelectedTrace(null)} />
+                <TracePanel traceId={selectedTrace} traceDate={selectedTraceDate} onClose={() => { setSelectedTrace(null); setSelectedTraceDate(null); }} />
               )}
             </>
           )}

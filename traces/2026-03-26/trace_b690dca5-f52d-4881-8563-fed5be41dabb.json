@@ -1,0 +1,158 @@
+{
+  "trace_id": "b690dca5-f52d-4881-8563-fed5be41dabb",
+  "session_id": "c889eb04-985b-4359-b95b-31ab0936807f",
+  "query": "查询所有销售订单",
+  "start_time": "2026-03-25T16:28:13.323699",
+  "end_time": "2026-03-26T00:28:16.760970",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "c294978e-ab4d-467b-85fa-d37fb4f99cda",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-25T16:28:13.477798",
+      "input": {
+        "query": "查询所有销售订单"
+      },
+      "output": {
+        "retrieved_tables": [
+          "sd.vbak",
+          "sd.vbrk",
+          "mm.ekko",
+          "sd.vbap",
+          "md.knvv"
+        ],
+        "similarity_scores": [
+          "0.5854077935218811",
+          "0.3631848394870758",
+          "0.3622376322746277",
+          "0.3300919830799103",
+          "0.31821486353874207"
+        ]
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "dd08aa4b-9f49-417b-805d-55284455ba71",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-25T16:28:13.477850",
+      "input": {
+        "query": "查询所有销售订单"
+      },
+      "output": {
+        "retrieved_tables": [
+          "sd.vbak",
+          "sd.vbrk",
+          "mm.ekko",
+          "sd.vbap",
+          "md.knvv"
+        ],
+        "similarity_scores": []
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "10e16c6e-8cf8-406e-8649-a00d75cae38d",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-25T16:28:16.742781",
+      "input": {
+        "input_tables": []
+      },
+      "output": {
+        "generated_sql": "SELECT \n    vbeln AS sales_order_no,\n    auart AS order_type,\n    vkorg AS sales_org,\n    kunnr AS customer_no,\n    erdat AS order_date,\n    netwr AS net_value\nFROM sd.vbak"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "7f0ed483-d65a-47e7-832f-09b9a90a664f",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-25T16:28:16.742868",
+      "input": {
+        "input_tables": []
+      },
+      "output": {
+        "generated_sql": "SELECT \n    vbeln AS sales_order_no,\n    auart AS order_type,\n    vkorg AS sales_org,\n    kunnr AS customer_no,\n    erdat AS order_date,\n    netwr AS net_value\nFROM sd.vbak"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "cd99efc7-4512-485b-8681-08f4bf500ac2",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-25T16:28:16.743951",
+      "input": {
+        "sql": "SELECT \n    vbeln AS sales_order_no,\n    auart AS order_type,\n    vkorg AS sales_org,\n    kunnr AS customer_no,\n    erdat AS order_date,\n    netwr AS net_value\nFROM sd.vbak"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "7ed1df6f-3a74-44f7-a895-f3158ca83ff5",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-25T16:28:16.743996",
+      "input": {
+        "sql": "SELECT \n    vbeln AS sales_order_no,\n    auart AS order_type,\n    vkorg AS sales_org,\n    kunnr AS customer_no,\n    erdat AS order_date,\n    netwr AS net_value\nFROM sd.vbak"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": ""
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "7ae91690-e33f-4ffb-b093-7d42b492d108",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-25T16:28:16.744727",
+      "input": {
+        "available_datasources": [
+          "SD"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "9694f5f5-06f2-4350-9fdd-cd9c0b0fd6d7",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-25T16:28:16.744768",
+      "input": {
+        "available_datasources": []
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "2c93ff1e-7fa1-49f8-8486-90b2515aceeb",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-25T16:28:16.754699",
+      "input": {
+        "sql": "SELECT \n    vbeln AS sales_order_no,\n    auart AS order_type,\n    vkorg AS sales_org,\n    kunnr AS customer_no,\n    erdat AS order_date,\n    netwr AS net_value\nFROM sd.vbak"
+      },
+      "output": {
+        "row_count": 10,
+        "execution_time_ms": 9.207725524902344,
+        "error": null
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "1e915fc1-c6bf-466e-a157-72742669e272",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-25T16:28:16.754829",
+      "input": {
+        "sql": "SELECT \n    vbeln AS sales_order_no,\n    auart AS order_type,\n    vkorg AS sales_org,\n    kunnr AS customer_no,\n    erdat AS order_date,\n    netwr AS net_value\nFROM sd.vbak"
+      },
+      "output": {
+        "row_count": 10,
+        "execution_time_ms": 0,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

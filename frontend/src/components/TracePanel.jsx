@@ -11,7 +11,7 @@ import {
 
 const { Text } = Typography;
 
-export function TracePanel({ traceId, onClose }) {
+export function TracePanel({ traceId, traceDate, onClose }) {
   const [trace, setTrace] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,13 +19,14 @@ export function TracePanel({ traceId, onClose }) {
     if (traceId) {
       fetchTrace();
     }
-  }, [traceId]);
+  }, [traceId, traceDate]);
 
   const fetchTrace = async () => {
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8001';
-      const today = new Date().toISOString().slice(0, 10);
-      const response = await fetch(`${API_BASE}/api/traces/${traceId}?date=${today}`);
+      const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+      // 用 trace 自己的日期查，不用 today（避免跨天查不到）
+      const dateParam = traceDate || new Date().toISOString().slice(0, 10);
+      const response = await fetch(`${API_BASE}/api/traces/${traceId}?date=${dateParam}`);
       const data = await response.json();
       setTrace(data);
     } catch (e) {
