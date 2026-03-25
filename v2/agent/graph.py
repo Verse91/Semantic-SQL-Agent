@@ -61,19 +61,27 @@ def create_workflow() -> StateGraph:
     )
     
     # 普通查询流程
-    workflow.add_edge("retrieve_schema", "generate_sql")
     workflow.add_edge("generate_sql", "validate_sql")
     workflow.add_edge("validate_sql", "route_datasource")
     workflow.add_edge("route_datasource", "execute_sql")
-    
+
     # FS 模式流程
     workflow.add_edge("load_fs", "parse_fs")
     workflow.add_edge("parse_fs", "retrieve_schema")
-    workflow.add_edge("retrieve_schema", "generate_query_plan")
     workflow.add_edge("generate_query_plan", "generate_sql")
     workflow.add_edge("generate_sql", "validate_sql")
     workflow.add_edge("validate_sql", "route_datasource")
     workflow.add_edge("route_datasource", "execute_sql")
+
+    # retrieve_schema 根据 mode 条件路由（query 模式到 generate_sql，FS 模式到 generate_query_plan）
+    workflow.add_conditional_edges(
+        "retrieve_schema",
+        lambda s: s.get("mode", "query"),
+        {
+            "query": "generate_sql",
+            "fs": "generate_query_plan"
+        }
+    )
     
     # 执行结果分支
     workflow.add_conditional_edges(
@@ -96,14 +104,10 @@ def create_workflow() -> StateGraph:
 
 # ========== 节点函数 ==========
 
-def route_decision_node(state: AgentState) -> AgentState:
-    """路由决策节点"""
-    # 如果有 fs_document，进入 FS 模式
-    if state.get("fs_document"):
-        state["mode"] = "fs"
-    else:
-        state["mode"] = "query"
-    return state
+def route_decision_node(state: AgentState) -> dict:
+    """路由决策节点 - 只返回需要更新的字段"""
+    mode = "fs" if state.get("fs_document") else "query"
+    return {"mode": mode}
 
 
 def decide_mode(state: AgentState) -> str:
@@ -111,28 +115,25 @@ def decide_mode(state: AgentState) -> str:
     return state.get("mode", "query")
 
 
-def retrieve_schema_node(state: AgentState) -> AgentState:
-    """Schema 检索节点"""
+def retrieve_schema_node(state: AgentState) -> dict:
+    """Schema 检索节点 - 只返回更新的字段"""
     from schema.schema_retriever import get_schema_retriever
     retriever = get_schema_retriever()
     schema_context, retrieved_tables = retriever.retrieve_with_tables(state["user_query"])
-    state["schema_context"] = schema_context
-    state["retrieved_tables"] = retrieved_tables
 
     # Trace logging
     if HAS_TRACING:
         log_schema_retriever(state["user_query"], retrieved_tables)
 
-    return state
+    return {"schema_context": schema_context, "retrieved_tables": retrieved_tables}
 
 
-def load_fs_node(state: AgentState) -> AgentState:
-    """加载 FS 文档"""
-    # fs_document 已经在 state 中
-    return state
+def load_fs_node(state: AgentState) -> dict:
+    """加载 FS 文档 - 无需更新任何字段"""
+    return {}
 
 
-def parse_fs_node(state: AgentState) -> AgentState:
+def parse_fs_node(state: AgentState) -> dict:
     """解析 FS 节点"""
     from skills.parse_fs import parse_fs_skill
     state = parse_fs_skill.run(state)
@@ -141,10 +142,10 @@ def parse_fs_node(state: AgentState) -> AgentState:
     if HAS_TRACING:
         log_step("parse_fs", input_data={"fs_document": state.get("fs_document", "")[:200]}, output_data={"fs_json": state.get("fs_json", {})})
 
-    return state
+    return {"fs_json": state.get("fs_json", {}), "error": state.get("error")}
 
 
-def generate_query_plan_node(state: AgentState) -> AgentState:
+def generate_query_plan_node(state: AgentState) -> dict:
     """生成 Query Plan 节点"""
     from skills.generate_query_plan import generate_query_plan_skill
     state = generate_query_plan_skill.run(state)
@@ -153,10 +154,10 @@ def generate_query_plan_node(state: AgentState) -> AgentState:
     if HAS_TRACING:
         log_step("generate_query_plan", input_data={"fs_json": state.get("fs_json", {})}, output_data={"query_plan": state.get("query_plan", {})})
 
-    return state
+    return {"query_plan": state.get("query_plan", {}), "error": state.get("error")}
 
 
-def generate_sql_node(state: AgentState) -> AgentState:
+def generate_sql_node(state: AgentState) -> dict:
     """SQL 生成节点"""
     from skills.generate_sql import generate_sql_skill
     state = generate_sql_skill.run(state)
@@ -166,24 +167,24 @@ def generate_sql_node(state: AgentState) -> AgentState:
         tables = [t.get("table_name", "") for t in state.get("retrieved_tables", [])]
         log_generate_sql(tables, state.get("generated_sql", ""))
 
-    return state
+    return {"generated_sql": state.get("generated_sql", ""), "error": state.get("error")}
 
 
-def validate_sql_node(state: AgentState) -> AgentState:
+def validate_sql_node(state: AgentState) -> dict:
     """SQL 校验节点"""
     from skills.validate_sql import validate_sql_skill
     state = validate_sql_skill.run(state)
 
     # Trace logging
+    is_valid = state.get("error") is None
+    reason = state.get("error", "") if not is_valid else ""
     if HAS_TRACING:
-        is_valid = state.get("error") is None
-        reason = state.get("error", "") if not is_valid else ""
         log_validate_sql(state.get("validated_sql", ""), is_valid, reason)
 
-    return state
+    return {"validated_sql": state.get("validated_sql", ""), "error": state.get("error")}
 
 
-def route_datasource_node(state: AgentState) -> AgentState:
+def route_datasource_node(state: AgentState) -> dict:
     """数据源路由节点"""
     from skills.route_datasource import route_datasource_skill
     state = route_datasource_skill.run(state)
@@ -192,10 +193,10 @@ def route_datasource_node(state: AgentState) -> AgentState:
     if HAS_TRACING:
         log_route_datasource(state.get("datasource", "postgresql"))
 
-    return state
+    return {"datasource": state.get("datasource", "postgresql")}
 
 
-def execute_sql_node(state: AgentState) -> AgentState:
+def execute_sql_node(state: AgentState) -> dict:
     """SQL 执行节点"""
     from skills.execute_sql import execute_sql_skill
     state = execute_sql_skill.run(state)
@@ -209,10 +210,19 @@ def execute_sql_node(state: AgentState) -> AgentState:
         error = state.get("error")
         log_execute_sql(sql, row_count, execution_time_ms, error)
 
-    return state
+    # 计算重试次数（如果需要重试则 +1）
+    retry_count = state.get("retry_count", 0)
+    if state.get("error") and retry_count < 2:
+        retry_count = retry_count + 1
+
+    return {
+        "execution_result": state.get("execution_result"),
+        "error": state.get("error"),
+        "retry_count": retry_count
+    }
 
 
-def repair_sql_node(state: AgentState) -> AgentState:
+def repair_sql_node(state: AgentState) -> dict:
     """SQL 修复节点"""
     from skills.repair_sql import repair_sql_skill
     state = repair_sql_skill.run(state)
@@ -225,10 +235,10 @@ def repair_sql_node(state: AgentState) -> AgentState:
         attempt = state.get("retry_count", 1)
         log_repair_sql(original_sql, repaired_sql, error, attempt)
 
-    return state
+    return {"generated_sql": state.get("generated_sql", ""), "validated_sql": state.get("validated_sql", ""), "error": state.get("error")}
 
 
-def format_result_node(state: AgentState) -> AgentState:
+def format_result_node(state: AgentState) -> dict:
     """结果格式化节点"""
     from skills.format_result import format_result_skill
     return format_result_skill.run(state)
@@ -238,16 +248,14 @@ def format_result_node(state: AgentState) -> AgentState:
 
 def should_retry(state: AgentState) -> str:
     """
-    判断是否需要重试
+    判断是否需要重试（只读，不修改 state）
     
-    Returns:
-        "success" 或 "retry"
+    注意：retry_count 已在 execute_sql_node 中更新，这里只做路由判断
     """
     error = state.get("error")
     retry_count = state.get("retry_count", 0)
-    
-    if error and retry_count < 2:
-        state["retry_count"] = retry_count + 1
+
+    if error and retry_count <= 2:
         return "retry"
     return "success"
 
