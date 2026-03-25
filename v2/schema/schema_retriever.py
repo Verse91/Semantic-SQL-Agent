@@ -136,8 +136,27 @@ class SchemaRetriever:
         Returns:
             (schema_text, tables) 元组
         """
-        schema_text = self.retrieve(query, top_k)
+        self.initialize()
+        
+        # 直接从向量搜索获取表名和分数，而不是从 schema_text 提取
+        if self._vector_store and self._vector_store.is_ready():
+            search_results = self._vector_store.search(query, top_k)
+            if search_results:
+                tables = [r["table"] for r in search_results]
+                similarity_scores = [r["score"] for r in search_results]
+                schema_text = self._get_schema_for_tables(search_results)
+                
+                if HAS_TRACING:
+                    log_schema_retriever(query, tables, scores=similarity_scores)
+                
+                return schema_text, tables
+        
+        schema_text = self.loader.get_schema_text()
         tables = self._extract_tables(schema_text)
+        
+        if HAS_TRACING:
+            log_schema_retriever(query, tables, scores=[])
+        
         return schema_text, tables
     
     def _extract_tables(self, schema_text: str) -> List[str]:

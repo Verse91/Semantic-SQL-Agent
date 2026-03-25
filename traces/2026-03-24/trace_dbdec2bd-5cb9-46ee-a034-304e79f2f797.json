@@ -1,0 +1,94 @@
+{
+  "trace_id": "dbdec2bd-5cb9-46ee-a034-304e79f2f797",
+  "session_id": "d5c86616-00fb-423f-b265-31d628c3ce36",
+  "query": "show purchase orders",
+  "start_time": "2026-03-23T16:14:02.809030",
+  "end_time": "2026-03-24T00:14:07.705466",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "4e8a91b0-cd3c-4800-a3cb-d60b87ab9454",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-23T16:14:02.875236",
+      "input": {
+        "query": "show purchase orders"
+      },
+      "output": {
+        "retrieved_tables": [
+          "sd.vbak",
+          "sd.vbrk",
+          "mm.ekko",
+          "sd.likp",
+          "sd.vbap"
+        ],
+        "similarity_scores": [
+          "0.5652845501899719",
+          "0.3704158067703247",
+          "0.34513765573501587",
+          "0.3105238080024719",
+          "0.2963871657848358"
+        ]
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "87a60b8f-e3aa-4bc5-a295-2d55d06cf160",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-23T16:14:07.699541",
+      "input": {
+        "input_tables": [
+          "sd.vbak",
+          "sd.vbrk",
+          "mm.ekko",
+          "sd.likp",
+          "sd.vbap"
+        ]
+      },
+      "output": {
+        "generated_sql": "SELECT \n    ebeln AS po_number,\n    lifnr AS vendor_number,\n    bedat AS po_date,\n    ekorg AS purchasing_org\nFROM mm.ekko;"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "a16bba86-df9c-4574-858c-03c8b82cbf7a",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-23T16:14:07.699624",
+      "input": {
+        "sql": "SELECT \n    ebeln AS po_number,\n    lifnr AS vendor_number,\n    bedat AS po_date,\n    ekorg AS purchasing_org\nFROM mm.ekko;"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "df1fbdbd-fef4-41ca-af37-1bdc76e72e3c",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-23T16:14:07.699727",
+      "input": {
+        "available_datasources": [
+          "MM"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "06491b2c-af1f-4428-a0c5-158a10208ed2",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-23T16:14:07.701833",
+      "input": {
+        "sql": "SELECT \n    ebeln AS po_number,\n    lifnr AS vendor_number,\n    bedat AS po_date,\n    ekorg AS purchasing_org\nFROM mm.ekko;"
+      },
+      "output": {
+        "row_count": 10,
+        "execution_time_ms": 1.9831657409667969,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

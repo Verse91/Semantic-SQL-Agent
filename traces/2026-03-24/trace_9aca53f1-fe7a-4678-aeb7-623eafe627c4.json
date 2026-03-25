@@ -1,0 +1,95 @@
+{
+  "trace_id": "9aca53f1-fe7a-4678-aeb7-623eafe627c4",
+  "session_id": "85d00043-2ad9-4d09-8f93-e3de1f6a144f",
+  "query": "查询最新创建的销售订单",
+  "start_time": "2026-03-23T16:19:48.304157",
+  "end_time": "2026-03-24T00:19:53.846034",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "0dba84e7-b4b7-4714-9346-e89b99e6bfb9",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-23T16:19:48.412736",
+      "input": {
+        "query": "查询最新创建的销售订单"
+      },
+      "output": {
+        "retrieved_tables": [
+          "sd.vbak",
+          "sd.vbrk",
+          "mm.ekko",
+          "sd.vbap",
+          "sd.likp"
+        ],
+        "similarity_scores": [
+          "0.6188160181045532",
+          "0.40038001537323",
+          "0.3885729908943176",
+          "0.360778272151947",
+          "0.348278671503067"
+        ]
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "f6dd4cc3-188c-4dac-ab73-c6649b565910",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-23T16:19:53.835296",
+      "input": {
+        "input_tables": [
+          "sd.vbak",
+          "sd.vbrk",
+          "mm.ekko",
+          "sd.vbap",
+          "sd.likp"
+        ]
+      },
+      "output": {
+        "generated_sql": "SELECT * \nFROM sd.vbak \nWHERE erdat = (SELECT MAX(erdat) FROM sd.vbak)"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "28614617-8872-443a-b3d7-2fe61111b3a6",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-23T16:19:53.835387",
+      "input": {
+        "sql": "SELECT * \nFROM sd.vbak \nWHERE erdat = (SELECT MAX(erdat) FROM sd.vbak)"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "d4be3fbd-374a-4e64-9644-0176b6a0da5e",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-23T16:19:53.835475",
+      "input": {
+        "available_datasources": [
+          "SD",
+          "SD"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "6dd7493f-118f-4add-846c-65e6042a34af",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-23T16:19:53.843185",
+      "input": {
+        "sql": "SELECT * \nFROM sd.vbak \nWHERE erdat = (SELECT MAX(erdat) FROM sd.vbak)"
+      },
+      "output": {
+        "row_count": 1,
+        "execution_time_ms": 7.564067840576172,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

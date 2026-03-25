@@ -39,6 +39,9 @@ try:
 except ImportError:
     HAS_TRACING = False
 
+# 导入 LangGraph workflow
+from agent.graph import workflow
+
 app = FastAPI(
     title="Semantic-SQL-Agent V2",
     description="Data Agent with LangGraph",
@@ -85,7 +88,7 @@ def chat(request: ChatRequest):
     # 获取或创建会话
     session_store = get_session_store()
     memory = get_conversation_memory()
-    
+
     if request.session_id:
         session_id = request.session_id
         # 检查会话是否存在
@@ -93,89 +96,64 @@ def chat(request: ChatRequest):
             session_id = session_store.create(session_id)
     else:
         session_id = session_store.create()
-    
+
     try:
         # 开始 Trace
         if HAS_TRACING:
             start_trace(request.query, session_id)
-        
+
         # 获取对话历史
         history = memory.get_recent(session_id, count=4)
-        
-        # 直接调用 skills (绕过 LangGraph 避免并发问题)
-        from skills.generate_sql import generate_sql_skill
-        from skills.validate_sql import validate_sql_skill
-        from skills.route_datasource import route_datasource_skill
-        from skills.execute_sql import execute_sql_skill
-        from skills.format_result import format_result_skill
-        from schema.schema_retriever import get_schema_retriever
-        
-        # 1. 获取 Schema (使用 retrieve_with_tables 获取表名列表)
-        retriever = get_schema_retriever()
-        schema_context, retrieved_tables = retriever.retrieve_with_tables(request.query)
-        
-        # 构建状态
+
+        # 构建初始状态
         state = {
             "user_query": request.query,
             "conversation_history": history,
-            "schema_context": schema_context,
-            "retrieved_tables": retrieved_tables,
+            "schema_context": "",
+            "retrieved_tables": [],
             "generated_sql": "",
             "validated_sql": "",
             "datasource": "postgresql",
             "execution_result": None,
             "error": None,
-            "retry_count": 0
+            "retry_count": 0,
+            "fs_document": "",  # 普通查询模式
+            "fs_json": {},
+            "query_plan": {},
+            "session_id": session_id,
+            "mode": "query"
         }
-        
-        # 2. 生成 SQL
-        state = generate_sql_skill.run(state)
-        
-        # 3. 校验 SQL
-        if not state.get("error"):
-            state = validate_sql_skill.run(state)
-        
-        # 4. 路由数据源
-        if not state.get("error"):
-            state = route_datasource_skill.run(state)
-        
-        # 5. 执行 SQL
-        if not state.get("error"):
-            state = execute_sql_skill.run(state)
-        
-        # 6. 格式化结果
-        if not state.get("error"):
-            state = format_result_skill.run(state)
-        
-        result = state
-        
+
+        # 使用 LangGraph workflow
+        result = workflow.invoke(state)
+
         # 保存对话
         if result.get("validated_sql"):
             memory.add(session_id, "user", request.query)
             memory.add(session_id, "assistant", result["validated_sql"])
-        
+
         # 更新会话
         session_store.update(session_id, {
             "last_query": request.query,
             "last_sql": result.get("validated_sql", "")
         })
-        
+
         # 结束 Trace (success)
         if HAS_TRACING:
             end_trace("success")
-        
+
         return ChatResponse(
             session_id=session_id,
             sql=result.get("validated_sql"),
             result=result.get("execution_result"),
             error=result.get("error")
         )
-        
+
     except Exception as e:
         # 结束 Trace (failed)
         if HAS_TRACING:
             end_trace("failed")
-        
+
         return ChatResponse(
             session_id=session_id,
             error=str(e)
@@ -302,85 +280,46 @@ async def upload_fs(
             content = await file.read()
             tmp.write(content)
             tmp_path = tmp.name
-        
+
         # 2. 加载 FS 文档
         loader = get_fs_loader()
         fs_document = loader.load(tmp_path)
-        
+
         # 清理临时文件
         os.unlink(tmp_path)
-        
-        # 3. 解析 FS
-        from skills.parse_fs import parse_fs_skill
+
+        # 3. 构建状态 (使用 workflow.invoke)
         state = {
             "user_query": "",
-            "fs_document": fs_document,
-            "fs_json": {},
-            "query_plan": {},
+            "conversation_history": [],
             "schema_context": "",
+            "retrieved_tables": [],
             "generated_sql": "",
             "validated_sql": "",
             "datasource": "postgresql",
             "execution_result": None,
             "error": None,
             "retry_count": 0,
-            "conversation_history": [],
+            "fs_document": fs_document,
+            "fs_json": {},
+            "query_plan": {},
             "session_id": session_id or str(uuid.uuid4()),
             "mode": "fs"
         }
-        
-        # 4. 解析 FS
-        state = parse_fs_skill.run(state)
-        if state.get("error"):
-            return {"success": False, "error": f"FS解析失败: {state['error']}"}
-        
-        # 5. 获取 Schema (使用 retrieve_with_tables 获取表名列表)
-        from schema.schema_retriever import get_schema_retriever
-        retriever = get_schema_retriever()
-        state["schema_context"], state["retrieved_tables"] = retriever.retrieve_with_tables("")
-        
-        # 6. 生成 Query Plan
-        from skills.generate_query_plan import generate_query_plan_skill
-        state = generate_query_plan_skill.run(state)
-        if state.get("error"):
-            return {"success": False, "error": f"Query Plan生成失败: {state['error']}"}
-        
-        # 7. 生成 SQL
-        from skills.generate_sql import generate_sql_skill
-        state = generate_sql_skill.run(state)
-        if state.get("error"):
-            return {"success": False, "error": f"SQL生成失败: {state['error']}"}
-        
-        # 8. 校验 SQL
-        from skills.validate_sql import validate_sql_skill
-        state = validate_sql_skill.run(state)
-        if state.get("error"):
-            return {"success": False, "error": f"SQL校验失败: {state['error']}"}
-        
-        # 9. 路由数据源
-        from skills.route_datasource import route_datasource_skill
-        state = route_datasource_skill.run(state)
-        
-        # 10. 执行 SQL
-        from skills.execute_sql import execute_sql_skill
-        state = execute_sql_skill.run(state)
-        if state.get("error"):
-            return {"success": False, "error": f"SQL执行失败: {state['error']}"}
-        
-        # 11. 格式化结果
-        from skills.format_result import format_result_skill
-        state = format_result_skill.run(state)
-        
+
+        # 4. 使用 LangGraph workflow
+        result = workflow.invoke(state)
+
         return {
-            "success": True,
-            "session_id": state["session_id"],
-            "fs_json": state.get("fs_json"),
-            "query_plan": state.get("query_plan"),
-            "sql": state.get("validated_sql"),
-            "result": state.get("execution_result"),
-            "error": state.get("error")
+            "success": result.get("error") is None,
+            "session_id": result["session_id"],
+            "fs_json": result.get("fs_json"),
+            "query_plan": result.get("query_plan"),
+            "sql": result.get("validated_sql"),
+            "result": result.get("execution_result"),
+            "error": result.get("error")
         }
-        
+
     except Exception as e:
         return {"success": False, "error": str(e)}
 

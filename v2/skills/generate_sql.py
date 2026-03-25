@@ -72,7 +72,7 @@ class GenerateSQLSkill(BaseSkill):
         }
         
         data = {
-            "model": "MiniMax-M2.1",
+            "model": "MiniMax-M2.7",
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.3
         }

@@ -7,21 +7,33 @@ warnings.filterwarnings("ignore", category=UserWarning)
 from langgraph.graph import StateGraph, END
 from .state import AgentState
 
+# 导入 trace 模块
+try:
+    from tracing import log_step, log_schema_retriever, log_generate_sql
+    from tracing import log_validate_sql, log_execute_sql, log_repair_sql
+    from tracing import log_route_datasource
+    HAS_TRACING = True
+except ImportError:
+    HAS_TRACING = False
+
 
 def create_workflow() -> StateGraph:
     """
     创建 Agent Workflow (支持两种模式)
-    
+
     模式1 - 普通查询:
-    retrieve_schema → generate_sql → validate_sql → 
+    retrieve_schema → generate_sql → validate_sql →
     route_datasource → execute_sql → format_result
-    
+
     模式2 - FS报表:
-    load_fs → parse_fs → schema_retrieval → generate_query_plan → 
+    load_fs → parse_fs → schema_retrieval → generate_query_plan →
     generate_sql → validate_sql → route_datasource → execute_sql → format_result
+
+    重试流程:
+    execute_sql → (失败) → repair_sql → execute_sql
     """
     workflow = StateGraph(AgentState)
-    
+
     # 添加所有节点
     workflow.add_node("route_decision", route_decision_node)
     workflow.add_node("retrieve_schema", retrieve_schema_node)
@@ -32,6 +44,7 @@ def create_workflow() -> StateGraph:
     workflow.add_node("validate_sql", validate_sql_node)
     workflow.add_node("route_datasource", route_datasource_node)
     workflow.add_node("execute_sql", execute_sql_node)
+    workflow.add_node("repair_sql", repair_sql_node)
     workflow.add_node("format_result", format_result_node)
     
     # 设置入口点
@@ -68,10 +81,13 @@ def create_workflow() -> StateGraph:
         should_retry,
         {
             "success": "format_result",
-            "retry": "execute_sql"  # 错误时重试当前节点
+            "retry": "repair_sql"  # 错误时修复 SQL
         }
     )
-    
+
+    # 修复后重新执行
+    workflow.add_edge("repair_sql", "execute_sql")
+
     # 完成
     workflow.add_edge("format_result", END)
     
@@ -102,6 +118,11 @@ def retrieve_schema_node(state: AgentState) -> AgentState:
     schema_context, retrieved_tables = retriever.retrieve_with_tables(state["user_query"])
     state["schema_context"] = schema_context
     state["retrieved_tables"] = retrieved_tables
+
+    # Trace logging
+    if HAS_TRACING:
+        log_schema_retriever(state["user_query"], retrieved_tables)
+
     return state
 
 
@@ -114,37 +135,97 @@ def load_fs_node(state: AgentState) -> AgentState:
 def parse_fs_node(state: AgentState) -> AgentState:
     """解析 FS 节点"""
     from skills.parse_fs import parse_fs_skill
-    return parse_fs_skill.run(state)
+    state = parse_fs_skill.run(state)
+
+    # Trace logging
+    if HAS_TRACING:
+        log_step("parse_fs", input_data={"fs_document": state.get("fs_document", "")[:200]}, output_data={"fs_json": state.get("fs_json", {})})
+
+    return state
 
 
 def generate_query_plan_node(state: AgentState) -> AgentState:
     """生成 Query Plan 节点"""
     from skills.generate_query_plan import generate_query_plan_skill
-    return generate_query_plan_skill.run(state)
+    state = generate_query_plan_skill.run(state)
+
+    # Trace logging
+    if HAS_TRACING:
+        log_step("generate_query_plan", input_data={"fs_json": state.get("fs_json", {})}, output_data={"query_plan": state.get("query_plan", {})})
+
+    return state
 
 
 def generate_sql_node(state: AgentState) -> AgentState:
     """SQL 生成节点"""
     from skills.generate_sql import generate_sql_skill
-    return generate_sql_skill.run(state)
+    state = generate_sql_skill.run(state)
+
+    # Trace logging
+    if HAS_TRACING:
+        tables = [t.get("table_name", "") for t in state.get("retrieved_tables", [])]
+        log_generate_sql(tables, state.get("generated_sql", ""))
+
+    return state
 
 
 def validate_sql_node(state: AgentState) -> AgentState:
     """SQL 校验节点"""
     from skills.validate_sql import validate_sql_skill
-    return validate_sql_skill.run(state)
+    state = validate_sql_skill.run(state)
+
+    # Trace logging
+    if HAS_TRACING:
+        is_valid = state.get("error") is None
+        reason = state.get("error", "") if not is_valid else ""
+        log_validate_sql(state.get("validated_sql", ""), is_valid, reason)
+
+    return state
 
 
 def route_datasource_node(state: AgentState) -> AgentState:
     """数据源路由节点"""
     from skills.route_datasource import route_datasource_skill
-    return route_datasource_skill.run(state)
+    state = route_datasource_skill.run(state)
+
+    # Trace logging
+    if HAS_TRACING:
+        log_route_datasource(state.get("datasource", "postgresql"))
+
+    return state
 
 
 def execute_sql_node(state: AgentState) -> AgentState:
     """SQL 执行节点"""
     from skills.execute_sql import execute_sql_skill
-    return execute_sql_skill.run(state)
+    state = execute_sql_skill.run(state)
+
+    # Trace logging
+    if HAS_TRACING:
+        sql = state.get("validated_sql", "")
+        result = state.get("execution_result", {})
+        row_count = result.get("row_count", 0) if isinstance(result, dict) else 0
+        execution_time_ms = result.get("execution_time_ms", 0) if isinstance(result, dict) else 0
+        error = state.get("error")
+        log_execute_sql(sql, row_count, execution_time_ms, error)
+
+    return state
+
+
+def repair_sql_node(state: AgentState) -> AgentState:
+    """SQL 修复节点"""
+    from skills.repair_sql import repair_sql_skill
+    state = repair_sql_skill.run(state)
+
+    # Trace logging
+    if HAS_TRACING:
+        original_sql = state.get("validated_sql", "")
+        repaired_sql = state.get("generated_sql", "")
+        error = state.get("error", "")
+        attempt = state.get("retry_count", 1)
+        log_repair_sql(original_sql, repaired_sql, error, attempt)
+
+    return state
 
 
 def format_result_node(state: AgentState) -> AgentState:

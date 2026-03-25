@@ -1,0 +1,95 @@
+{
+  "trace_id": "4c2a6de3-1f92-4b72-a74d-1dc6706c5dcb",
+  "session_id": "ffb2ca44-6969-4846-ba0f-1a0cd6212735",
+  "query": "我要显示中文列名",
+  "start_time": "2026-03-23T16:18:50.992467",
+  "end_time": "2026-03-24T00:18:58.262257",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "8467c694-7732-4d9f-9c10-46e5821829b9",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-23T16:18:51.233755",
+      "input": {
+        "query": "我要显示中文列名"
+      },
+      "output": {
+        "retrieved_tables": [
+          "md.t001w",
+          "pp.afpo",
+          "md.makt",
+          "pp.afko",
+          "im.mard"
+        ],
+        "similarity_scores": [
+          "0.4160560965538025",
+          "0.40221869945526123",
+          "0.40024957060813904",
+          "0.38215577602386475",
+          "0.3724309206008911"
+        ]
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "454d9bfb-790f-4895-8668-db7680822a83",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-23T16:18:58.232686",
+      "input": {
+        "input_tables": [
+          "md.t001w",
+          "pp.afpo",
+          "md.makt",
+          "pp.afko",
+          "im.mard"
+        ]
+      },
+      "output": {
+        "generated_sql": "SELECT \n    e.ebeln AS 采购订单号,\n    e.lifnr AS 供应商,\n    e.bedat AS 采购日期,\n    e.ekorg AS 采购组织,\n    p.ebelp AS 行项目,\n    p.matnr AS 物料编号,\n    p.menge AS 数量,\n    p.netpr AS 净价\nFROM mm.ekko e\nJOIN mm.ekpo p ON e.ebeln = p.ebeln\nORDER BY e.bedat DESC"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "3865254c-5a78-425d-b21a-1cd08a40ceb2",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-23T16:18:58.234455",
+      "input": {
+        "sql": "SELECT \n    e.ebeln AS 采购订单号,\n    e.lifnr AS 供应商,\n    e.bedat AS 采购日期,\n    e.ekorg AS 采购组织,\n    p.ebelp AS 行项目,\n    p.matnr AS 物料编号,\n    p.menge AS 数量,\n    p.netpr AS 净价\nFROM mm.ekko e\nJOIN mm.ekpo p ON e.ebeln = p.ebeln\nORDER BY e.bedat DESC"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "90d64904-4c10-4103-bd25-e938d94d5086",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-23T16:18:58.234706",
+      "input": {
+        "available_datasources": [
+          "MM",
+          "MM"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "96b7a299-57f8-455d-a520-f0b2f10eba37",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-23T16:18:58.259230",
+      "input": {
+        "sql": "SELECT \n    e.ebeln AS 采购订单号,\n    e.lifnr AS 供应商,\n    e.bedat AS 采购日期,\n    e.ekorg AS 采购组织,\n    p.ebelp AS 行项目,\n    p.matnr AS 物料编号,\n    p.menge AS 数量,\n    p.netpr AS 净价\nFROM mm.ekko e\nJOIN mm.ekpo p ON e.ebeln = p.ebeln\nORDER BY e.bedat DESC"
+      },
+      "output": {
+        "row_count": 17,
+        "execution_time_ms": 24.306058883666992,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

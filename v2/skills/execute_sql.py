@@ -109,5 +109,11 @@ class ExecuteSQLSkill(BaseSkill):
         return state
 
 
-# 实例
+# 工厂函数
+def get_execute_sql_skill() -> ExecuteSQLSkill:
+    """获取 ExecuteSQLSkill 实例（工厂函数，避免单例问题）"""
+    return ExecuteSQLSkill()
+
+
+# 实例（保留向后兼容）
 execute_sql_skill = ExecuteSQLSkill()

@@ -1,0 +1,95 @@
+{
+  "trace_id": "f6b6ccee-40b3-453b-ade2-d19018c6cee5",
+  "session_id": "ffb2ca44-6969-4846-ba0f-1a0cd6212735",
+  "query": "查询最新的采购订单明细",
+  "start_time": "2026-03-23T15:51:55.941837",
+  "end_time": "2026-03-23T23:52:13.970020",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "63efd1a8-7512-4fde-bcef-775214ce2d42",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-23T15:52:05.376348",
+      "input": {
+        "query": "查询最新的采购订单明细"
+      },
+      "output": {
+        "retrieved_tables": [
+          "sd.vbak",
+          "mm.ekko",
+          "sd.vbrk",
+          "sd.likp",
+          "mm.ekpo"
+        ],
+        "similarity_scores": [
+          "0.5827376842498779",
+          "0.45557618141174316",
+          "0.40744549036026",
+          "0.3928444981575012",
+          "0.37800073623657227"
+        ]
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "d2b0867f-b705-44e5-afd8-a9968d9339b2",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-23T15:52:13.950417",
+      "input": {
+        "input_tables": [
+          "sd.vbak",
+          "mm.ekko",
+          "sd.vbrk",
+          "sd.likp",
+          "mm.ekpo"
+        ]
+      },
+      "output": {
+        "generated_sql": "SELECT \n    e.ebeln AS po_number,\n    e.lifnr AS vendor,\n    e.bedat AS po_date,\n    e.ekorg AS purchasing_org,\n    p.ebelp AS line_item,\n    p.matnr AS material,\n    p.menge AS quantity,\n    p.netpr AS net_price\nFROM mm.ekko e\nJOIN mm.ekpo p ON e.ebeln = p.ebeln\nORDER BY e.bedat DESC"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "4e70564c-9437-497e-921d-86960361410b",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-23T15:52:13.950539",
+      "input": {
+        "sql": "SELECT \n    e.ebeln AS po_number,\n    e.lifnr AS vendor,\n    e.bedat AS po_date,\n    e.ekorg AS purchasing_org,\n    p.ebelp AS line_item,\n    p.matnr AS material,\n    p.menge AS quantity,\n    p.netpr AS net_price\nFROM mm.ekko e\nJOIN mm.ekpo p ON e.ebeln = p.ebeln\nORDER BY e.bedat DESC"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "e419f274-ba0f-4d3e-9b2f-2cb0c290dda1",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-23T15:52:13.950923",
+      "input": {
+        "available_datasources": [
+          "MM",
+          "MM"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "7d9d4fa3-49fa-4062-acf5-75ef58bd8284",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-23T15:52:13.967602",
+      "input": {
+        "sql": "SELECT \n    e.ebeln AS po_number,\n    e.lifnr AS vendor,\n    e.bedat AS po_date,\n    e.ekorg AS purchasing_org,\n    p.ebelp AS line_item,\n    p.matnr AS material,\n    p.menge AS quantity,\n    p.netpr AS net_price\nFROM mm.ekko e\nJOIN mm.ekpo p ON e.ebeln = p.ebeln\nORDER BY e.bedat DESC"
+      },
+      "output": {
+        "row_count": 17,
+        "execution_time_ms": 16.52216911315918,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}

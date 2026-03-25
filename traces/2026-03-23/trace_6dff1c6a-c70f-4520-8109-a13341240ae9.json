@@ -1,0 +1,95 @@
+{
+  "trace_id": "6dff1c6a-c70f-4520-8109-a13341240ae9",
+  "session_id": "d585124f-2437-4681-8d3e-18acc9f6170f",
+  "query": "查询最新的采购订单明细",
+  "start_time": "2026-03-23T15:43:53.285135",
+  "end_time": "2026-03-23T23:44:04.631078",
+  "status": "success",
+  "steps": [
+    {
+      "step_id": "7b7de9da-2690-456c-bb18-70e32e1791c0",
+      "step_name": "schema_retriever",
+      "timestamp": "2026-03-23T15:43:54.818279",
+      "input": {
+        "query": "查询最新的采购订单明细"
+      },
+      "output": {
+        "retrieved_tables": [
+          "sd.vbak",
+          "mm.ekko",
+          "sd.vbrk",
+          "sd.likp",
+          "mm.ekpo"
+        ],
+        "similarity_scores": [
+          "0.5827376842498779",
+          "0.45557618141174316",
+          "0.40744549036026",
+          "0.3928444981575012",
+          "0.37800073623657227"
+        ]
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "12f26e21-8fae-4c11-9941-5387ae425e35",
+      "step_name": "generate_sql",
+      "timestamp": "2026-03-23T15:44:04.600388",
+      "input": {
+        "input_tables": [
+          "sd.vbak",
+          "mm.ekko",
+          "sd.vbrk",
+          "sd.likp",
+          "mm.ekpo"
+        ]
+      },
+      "output": {
+        "generated_sql": "SELECT \n    k.ebeln,\n    k.ebelp,\n    k.matnr,\n    k.menge,\n    k.netpr,\n    h.lifnr,\n    h.bedat,\n    h.ekorg\nFROM mm.ekko h\nINNER JOIN mm.ekpo k ON h.ebeln = k.ebeln\nORDER BY h.bedat DESC, k.ebelp ASC"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "20e30a59-bdea-4bd3-98d6-2e0be7a34f91",
+      "step_name": "validate_sql",
+      "timestamp": "2026-03-23T15:44:04.600468",
+      "input": {
+        "sql": "SELECT \n    k.ebeln,\n    k.ebelp,\n    k.matnr,\n    k.menge,\n    k.netpr,\n    h.lifnr,\n    h.bedat,\n    h.ekorg\nFROM mm.ekko h\nINNER JOIN mm.ekpo k ON h.ebeln = k.ebeln\nORDER BY h.bedat DESC, k.ebelp ASC"
+      },
+      "output": {
+        "is_valid": true,
+        "reason": "SELECT only"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "27272a8b-9854-4288-8019-85442f0b8352",
+      "step_name": "route_datasource",
+      "timestamp": "2026-03-23T15:44:04.600542",
+      "input": {
+        "available_datasources": [
+          "MM",
+          "MM"
+        ]
+      },
+      "output": {
+        "selected_datasource": "trino"
+      },
+      "metadata": {}
+    },
+    {
+      "step_id": "44531ec3-a973-4dc4-91eb-d2810b5216c5",
+      "step_name": "execute_sql",
+      "timestamp": "2026-03-23T15:44:04.629650",
+      "input": {
+        "sql": "SELECT \n    k.ebeln,\n    k.ebelp,\n    k.matnr,\n    k.menge,\n    k.netpr,\n    h.lifnr,\n    h.bedat,\n    h.ekorg\nFROM mm.ekko h\nINNER JOIN mm.ekpo k ON h.ebeln = k.ebeln\nORDER BY h.bedat DESC, k.ebelp ASC"
+      },
+      "output": {
+        "row_count": 17,
+        "execution_time_ms": 28.95188331604004,
+        "error": null
+      },
+      "metadata": {}
+    }
+  ]
+}
