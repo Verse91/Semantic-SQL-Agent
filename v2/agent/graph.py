@@ -211,15 +211,10 @@ def execute_sql_node(state: AgentState) -> dict:
         error = state.get("error")
         log_execute_sql(sql, row_count, execution_time_ms, error)
 
-    # 计算重试次数（如果需要重试则 +1）
-    retry_count = state.get("retry_count", 0)
-    if state.get("error") and retry_count < 2:
-        retry_count = retry_count + 1
-
     return {
         "execution_result": state.get("execution_result"),
         "error": state.get("error"),
-        "retry_count": retry_count
+        "retry_count": state.get("retry_count", 0)
     }
 
 
@@ -249,14 +244,13 @@ def format_result_node(state: AgentState) -> dict:
 
 def should_retry(state: AgentState) -> str:
     """
-    判断是否需要重试（只读，不修改 state）
-    
-    注意：retry_count 已在 execute_sql_node 中更新，这里只做路由判断
+    判断是否需要重试，最多重试 2 次（3 次执行机会）
     """
     error = state.get("error")
     retry_count = state.get("retry_count", 0)
 
-    if error and retry_count <= 2:
+    if error and retry_count < 2:
+        state["retry_count"] = retry_count + 1
         return "retry"
     return "success"
 
