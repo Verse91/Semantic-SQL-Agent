@@ -308,7 +308,17 @@ async def upload_fs(
         }
 
         # 4. 使用 LangGraph workflow
-        result = workflow.invoke(state)
+        fs_query = f"FS上传: {file.filename}"
+        try:
+            start_trace(fs_query, state["session_id"])
+            result = workflow.invoke(state)
+            end_trace("success")
+        except Exception as e:
+            try:
+                end_trace("failed")
+            except:
+                pass
+            return {"success": False, "error": str(e)}
 
         return {
             "success": result.get("error") is None,
