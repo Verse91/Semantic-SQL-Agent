@@ -198,7 +198,8 @@ def route_datasource_node(state: AgentState) -> dict:
 
 def execute_sql_node(state: AgentState) -> dict:
     """SQL 执行节点"""
-    from skills.execute_sql import execute_sql_skill
+    from skills.execute_sql import get_execute_sql_skill
+    execute_sql_skill = get_execute_sql_skill()
     state = execute_sql_skill.run(state)
 
     # Trace logging
