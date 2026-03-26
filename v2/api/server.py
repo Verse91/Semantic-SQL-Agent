@@ -28,16 +28,63 @@ from memory.session_store import get_session_store
 # 导入 trace 模块
 try:
     from tracing import start_trace, end_trace
-    # 预加载 skills 以确保模块实例一致
     from skills.generate_sql import generate_sql_skill
     from skills.validate_sql import validate_sql_skill
     from skills.route_datasource import route_datasource_skill
     from skills.execute_sql import execute_sql_skill
-    from skills.format_result import format_result_skill
-    from schema.schema_retriever import retrieve_schema
     HAS_TRACING = True
 except ImportError:
     HAS_TRACING = False
+
+
+# ========== 错误处理 ==========
+
+def format_error(e: Exception) -> str:
+    """将异常转换为用户友好的错误消息"""
+    error_type = type(e).__name__
+    error_msg = str(e)
+
+    # 网络/连接错误
+    if any(x in error_msg.lower() for x in ["connection", "timeout", "network", "refused", "unreachable"]):
+        return "❌ 数据库连接失败，请稍后重试"
+
+    # LLM API 错误
+    if "MiniMax" in error_msg or "minimax" in error_msg.lower() or "api" in error_msg.lower():
+        if "401" in error_msg or "403" in error_msg or "unauthorized" in error_msg.lower():
+            return "❌ AI 服务认证失败，请检查 API 配置"
+        if "429" in error_msg or "rate limit" in error_msg.lower():
+            return "❌ AI 服务请求过于频繁，请稍后重试"
+        if "timeout" in error_msg.lower():
+            return "❌ AI 服务响应超时，请简化查询或稍后重试"
+        return "❌ AI 服务暂时不可用，请稍后重试"
+
+    # 数据库错误
+    if any(x in error_type.lower() for x in ["sql", "database", "postgresql", "trino", "hana", "psycopg"]):
+        if "syntax" in error_msg.lower() or "syntax error" in error_msg.lower():
+            return "❌ SQL 语法错误，AI 生成的 SQL 有问题"
+        if "permission denied" in error_msg.lower():
+            return "❌ 数据库权限不足"
+        if "does not exist" in error_msg.lower():
+            return "❌ 数据库表或字段不存在"
+        return "❌ 数据库执行错误，请简化查询"
+
+    # SQL 执行错误
+    if "Repair failed" in error_msg:
+        return f"❌ SQL 自动修复失败：{error_msg}"
+
+    # 空结果
+    if "no sql" in error_msg.lower() or "failed to generate" in error_msg.lower():
+        return "❌ 未能生成有效 SQL，请尝试换一种方式描述您的查询"
+
+    # 未知错误（不暴露内部细节）
+    if error_type in ["ValueError", "KeyError", "TypeError", "AttributeError"]:
+        return "❌ 查询处理出现意外问题，请尝试简化描述"
+    return "❌ 处理失败，请稍后重试"
+
+
+# 预加载 skills
+from skills.format_result import format_result_skill
+from schema.schema_retriever import retrieve_schema
 
 # 导入 LangGraph workflow
 from agent.graph import workflow
@@ -156,7 +203,7 @@ def chat(request: ChatRequest):
 
         return ChatResponse(
             session_id=session_id,
-            error=str(e)
+            error=format_error(e)
         )
 
 
@@ -200,7 +247,7 @@ async def generate_sql(request: GenerateSQLRequest):
             "error": state.get("error")
         }
     except Exception as e:
-        return {"success": False, "data": {"sql": None}, "error": str(e)}
+        return {"success": False, "data": {"sql": None}, "error": format_error(e)}
 
 
 class ExecuteSQLRequest(BaseModel):
@@ -233,7 +280,7 @@ async def execute_sql(request: ExecuteSQLRequest):
             "error": state.get("error")
         }
     except Exception as e:
-        return {"success": False, "data": None, "error": str(e)}
+        return {"success": False, "data": None, "error": format_error(e)}
 
 
 @app.get("/session/{session_id}/history")
@@ -318,7 +365,7 @@ async def upload_fs(
                 end_trace("failed")
             except:
                 pass
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": format_error(e)}
 
         return {
             "success": result.get("error") is None,
@@ -331,7 +378,7 @@ async def upload_fs(
         }
 
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": format_error(e)}
 
 
 # ========== Trace API ==========
@@ -345,7 +392,7 @@ def list_traces(date: str = None, limit: int = 50, days: int = 7):
         traces = storage.list_traces(date, limit, days)
         return {"traces": traces}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": format_error(e)}
 
 
 @app.get("/api/traces/{trace_id}")
@@ -359,4 +406,4 @@ def get_trace(trace_id: str, date: str = None):
             return trace
         return {"error": "Trace not found"}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": format_error(e)}
