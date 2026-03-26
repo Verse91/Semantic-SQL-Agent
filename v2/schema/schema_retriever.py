@@ -30,6 +30,7 @@ class SchemaRetriever:
         self.index = SchemaIndex()
         self._vector_store = None
         self._initialized = False
+        self._cache = {}  # 查询缓存: query -> (schema_text, retrieved_tables)
     
     def initialize(self):
         """初始化索引"""
@@ -75,6 +76,10 @@ class SchemaRetriever:
         """
         self.initialize()
         
+        # 查询缓存命中
+        if query in self._cache:
+            return self._cache[query][0]
+        
         # 存储相似度分数用于 trace
         similarity_scores = []
         
@@ -96,6 +101,9 @@ class SchemaRetriever:
                 if HAS_TRACING:
                     log_schema_retriever(query, tables, scores=similarity_scores)
                 
+                # 缓存结果
+                tables = [r["table"] for r in search_results]
+                self._cache[query] = (schema_text, tables)
                 return schema_text
         # 回退到旧版 FAISS 索引
         elif self.index.is_ready():
@@ -112,6 +120,8 @@ class SchemaRetriever:
         if HAS_TRACING:
             log_schema_retriever(query, tables, scores=[])
         
+        # 缓存结果
+        self._cache[query] = (schema_text, tables)
         return schema_text
     
     def _get_schema_for_tables(self, table_results: List[dict]) -> str:
@@ -138,6 +148,10 @@ class SchemaRetriever:
         """
         self.initialize()
         
+        # 查询缓存命中
+        if query in self._cache:
+            return self._cache[query]
+        
         # 直接从向量搜索获取表名和分数，而不是从 schema_text 提取
         if self._vector_store and self._vector_store.is_ready():
             search_results = self._vector_store.search(query, top_k)
@@ -149,6 +163,8 @@ class SchemaRetriever:
                 if HAS_TRACING:
                     log_schema_retriever(query, tables, scores=similarity_scores)
                 
+                # 缓存结果
+                self._cache[query] = (schema_text, tables)
                 return schema_text, tables
         
         schema_text = self.loader.get_schema_text()
@@ -157,6 +173,8 @@ class SchemaRetriever:
         if HAS_TRACING:
             log_schema_retriever(query, tables, scores=[])
         
+        # 缓存结果
+        self._cache[query] = (schema_text, tables)
         return schema_text, tables
     
     def _extract_tables(self, schema_text: str) -> List[str]:
